@@ -1,5 +1,7 @@
 # Documentación de MinimalEcommerce
 
+> **Histórico.** El estado descrito aquí es el prototipo **obsoleto**. Diagramas, contrato API, cambio de enfoque/stack y plan de remodelación: **[docs/README.md](docs/README.md)**.
+
 Análisis del repositorio `minimalecommerce` (GitHub: `julianmeoficial/minimalecommerce`). Complementa el [README.md](README.md) (estado y arranque) y [REESTRUCTURA.md](REESTRUCTURA.md) (fallas y enfoque futuro).
 
 ---

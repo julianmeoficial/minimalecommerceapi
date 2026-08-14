@@ -1,5 +1,7 @@
 # Fallas, actualizaciones y reestructura de MinimalEcommerce
 
+> **Histórico.** El prototipo en `src/` está declarado **obsoleto**. La documentación canónica de remodelación (diagramas Mermaid, contrato API, cambio de enfoque y de stack) está en **[docs/README.md](docs/README.md)**.
+
 Este documento no describe cómo está el código (eso está en [DOCUMENTACION.md](DOCUMENTACION.md)). Describe **por qué no escala**, **qué conviene arreglar ya** y **qué arquitectura distinta** debería sustituir al CRUD anémico actual.
 
 La tesis: no conviene partir este backend en microservicios. Conviene convertirlo en un **monolito modular por dominios**, con frontera HTTP desacoplada del modelo JPA, autenticación real y un frontend que no viva dentro de Spring MVC.
