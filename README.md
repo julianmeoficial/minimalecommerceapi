@@ -1,162 +1,69 @@
-# MinimalEcommerce
+# MinimalEcommerce — API REST (estado obsoleto)
 
-API REST de un marketplace mínimo (comprador / vendedor). Backend en **Java 17** y **Spring Boot 3.5.0**, persistencia en **MySQL**.
-
-Este repositorio **no incluye frontend**. La API está pensada para un cliente en `http://localhost:3000` (u otro origen local). El estado actual es un **prototipo / aplicación base**: el dominio comercial está cubierto en código, pero la seguridad, el arranque de datos y la operación no están listos para producción.
-
-Documentación adicional:
-
-- [DOCUMENTACION.md](DOCUMENTACION.md) — análisis completo (función, core, arquitectura, endpoints, tecnologías)
-- [REESTRUCTURA.md](REESTRUCTURA.md) — fallas, mejoras inmediatas y enfoque futuro
+> **Este estado del proyecto está obsoleto.** El código en `src/` es un prototipo de API Spring Boot que **requiere remodelación, reestructura y un nuevo planteamiento**. No es un producto, no es un frontend y no debe desplegarse tal cual.
+>
+> Documentación canónica de la remodelación: **[docs/README.md](docs/README.md)**.
 
 ---
 
-## Estado actual
+## Qué es este repositorio ahora
 
-| Aspecto | Situación |
+Este repo se trata como **API HTTP** de un marketplace mínimo (comprador / vendedor), no como aplicación completa.
+
+| | |
 |---|---|
-| Tipo | Backend REST, puerto `8080` |
-| Versión | `0.0.1-SNAPSHOT` |
-| Núcleo comercial | Catálogo, carrito, checkout, pedidos, stock |
-| Extensiones | Cupones, reseñas, favoritos, direcciones, preórdenes, notificaciones, blog, eventos, métricas de vendedor, imágenes |
-| Autenticación | Login por email/contraseña **en texto plano**; sin JWT ni sesiones |
-| Autorización | Todas las rutas están abiertas (`permitAll`) |
-| Frontend | No está en este repositorio |
-| Docker / CI | No hay |
-| Tests | Un test de carga de contexto (`contextLoads`) |
-| Documentación de API | SpringDoc OpenAPI / Swagger UI |
+| Contrato | REST bajo `/api/**` en el puerto `8080` |
+| Runtime actual | Java 17 · Spring Boot 3.5.0 · MySQL |
+| Clientes | Ninguno en este repo (se esperaba un frontend en `:3000`) |
+| Versión | `0.0.1-SNAPSHOT` — prototipo |
 
-**Advertencia de seguridad:** no uses este proyecto tal cual en un entorno público. Las credenciales de MySQL están en `application.properties`, las contraseñas de usuario no se cifran al registrar, y cualquier cliente puede llamar a todos los endpoints.
+Inventario de endpoints, entidades y stack: [DOCUMENTACION.md](DOCUMENTACION.md) (histórico).  
+Fallas y oleadas de arreglo: [REESTRUCTURA.md](REESTRUCTURA.md) (histórico).  
+**Diagramas, obsolescencia, cambio de enfoque y cambio de stack:** [docs/](docs/README.md).
 
 ---
 
-## Requisitos
+## Índice de la remodelación
 
-- JDK 17 o superior
-- Maven (incluido el wrapper `./mvnw`)
-- MySQL 8 escuchando en `localhost:3306`
-
-La aplicación espera una base llamada `minimalecommerce`. Hibernate crea o actualiza tablas con `ddl-auto=update`.
+| Documento | Para qué |
+|---|---|
+| [docs/00-ESTADO-OBSOLETO.md](docs/00-ESTADO-OBSOLETO.md) | Por qué este código ya no es el destino |
+| [docs/01-ARQUITECTURA-API.md](docs/01-ARQUITECTURA-API.md) | Capas, ciclo de un request, OpenAPI |
+| [docs/02-MODELO-DATOS.md](docs/02-MODELO-DATOS.md) | ER de MySQL y conexiones JPA |
+| [docs/03-FLUJOS.md](docs/03-FLUJOS.md) | Auth, catálogo, carrito/checkout, imágenes |
+| [docs/04-CONEXIONES.md](docs/04-CONEXIONES.md) | Cliente ↔ API ↔ BD ↔ estáticos |
+| [docs/05-CONTRATO-API.md](docs/05-CONTRATO-API.md) | Superficie HTTP a preservar o rediseñar |
+| [docs/06-CAMBIO-DE-ENFOQUE.md](docs/06-CAMBIO-DE-ENFOQUE.md) | Si se cambia el enfoque (modular, micro, BaaS) |
+| [docs/07-CAMBIO-DE-STACK.md](docs/07-CAMBIO-DE-STACK.md) | Si se cambia el stack (Node, .NET, Go, serverless) |
+| [docs/08-PLAN-REMODELACION.md](docs/08-PLAN-REMODELACION.md) | Secuencia recomendada de remodelación |
 
 ---
 
-## Arranque local
+## Arranque del prototipo (solo referencia)
 
-1. Crea la base (si no existe):
+Sigue siendo útil para inspeccionar el comportamiento actual. **No es el objetivo de producción.**
 
-```sql
-CREATE DATABASE IF NOT EXISTS minimalecommerce
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-```
-
-2. Configura conexión en `src/main/resources/application.properties` **o**, preferible, con variables de entorno / un perfil local que no se suba al repositorio:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/minimalecommerce?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-spring.datasource.username=root
-spring.datasource.password=<tu-password>
-```
-
-No copies secretos al repositorio. El archivo actual ya contiene una contraseña en texto plano; trátala como deuda técnica (ver [REESTRUCTURA.md](REESTRUCTURA.md)).
-
-3. Arranca:
+Requisitos: JDK 17, Maven Wrapper, MySQL 8 en `localhost:3306`.
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-4. Comprueba:
-
 | Recurso | URL |
 |---|---|
 | API | `http://localhost:8080/api/**` |
-| Swagger UI | `http://localhost:8080/swagger-ui.html` o `/swagger-ui/index.html` |
-| OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
-| Imágenes de producto | `http://localhost:8080/imagenes-productos/<archivo>` |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` |
+| OpenAPI | `http://localhost:8080/v3/api-docs` |
+| Imágenes | `http://localhost:8080/imagenes-productos/<archivo>` |
 
-### Datos semilla
+La conexión MySQL está en `src/main/resources/application.properties`. Hay secretos en ese archivo: no los copies a otros entornos. El seed `data.sql` **no se ejecuta** contra MySQL (`spring.sql.init.mode=embedded`).
 
-`data.sql` inserta categorías y usuarios demo **solo si la tabla está vacía**, pero `spring.sql.init.mode=embedded` hace que **ese script no se ejecute contra MySQL**. Los archivos `data-nuevas-tablas.sql` y `data-nuevas-3-tablas.sql` tampoco se aplican solos. Si necesitas datos de prueba, ejecútalos a mano en MySQL.
-
-Usuarios previstos en el seed (contraseña de aplicación, no de MySQL): `password123`
-
-| Email | Rol |
-|---|---|
-| `comprador@minimalecommerce.com` | COMPRADOR |
-| `vendedor@minimalecommerce.com` | VENDEDOR |
-| `maria@test.com` | COMPRADOR |
-
-Categorías previstas: Tecnología, Hogar, Moda, Mascotas, Manualidades.
+**Seguridad:** todas las rutas están abiertas (`permitAll`), las contraseñas van en texto plano, no hay JWT.
 
 ---
 
-## Módulos de la API
+## Módulos HTTP actuales (superficie)
 
-Prefijo común: `/api`.
+`/api/auth` · `/api/usuarios` · `/api/productos` · `/api/categorias` · `/api/carrito` · `/api/pedidos` · `/api/pedidoitems` · `/api/cupones` · `/api/resenas` · `/api/favoritos` · `/api/direcciones` · `/api/preordenes` · `/api/notificaciones` · `/api/blogs` · `/api/eventos` · `/api/metricas-vendedor` · `/api/imagenes`
 
-| Prefijo | Responsabilidad |
-|---|---|
-| `/api/auth` | Login |
-| `/api/usuarios` | Registro, login duplicado, CRUD, roles comprador/vendedor |
-| `/api/productos` | Catálogo, stock, preorden, alta con imagen |
-| `/api/categorias` | Categorías |
-| `/api/carrito` | Carrito y checkout (`POST /procesar-pedido`) |
-| `/api/pedidos` | Pedidos de comprador/vendedor y cambio de estado |
-| `/api/pedidoitems` | Líneas de pedido |
-| `/api/cupones` | Cupones de vendedor, validación y aplicación |
-| `/api/resenas` | Reseñas de producto y estadísticas |
-| `/api/favoritos` | Lista de deseos / toggle |
-| `/api/direcciones` | Direcciones de entrega |
-| `/api/preordenes` | Preórdenes de productos aún no disponibles |
-| `/api/notificaciones` | Bandeja in-app |
-| `/api/blogs` | Artículos |
-| `/api/eventos` | Eventos / ferias |
-| `/api/metricas-vendedor` | Métricas agregadas del vendedor |
-| `/api/imagenes` | Subida y gestión de imágenes |
-
-Detalle de endpoints, entidades y flujos: [DOCUMENTACION.md](DOCUMENTACION.md).
-
----
-
-## Stack (resumen)
-
-Java 17 · Maven Wrapper · Spring Boot 3.5.0 · Spring Web · Spring Data JPA / Hibernate · Spring Security · Spring Validation · MySQL Connector/J · Lombok · SpringDoc OpenAPI 2.1.0 · Spring Boot DevTools · JUnit 5
-
-Lista completa y ausencias (Docker, JWT, Flyway, pagos, frontend): [DOCUMENTACION.md](DOCUMENTACION.md#tecnologías).
-
----
-
-## Estructura del código
-
-```
-src/main/java/com/minimalecommerce/app/
-  MinimalecommerceApplication.java
-  config/       Security, CORS, recursos estáticos, OpenAPI
-  controller/   17 controladores REST
-  service/      16 servicios de negocio
-  repository/   15 repositorios Spring Data JPA
-  model/        Entidades JPA y enums
-  exception/    GlobalExceptionHandler
-src/main/resources/
-  application.properties
-  data.sql
-  data-nuevas-tablas.sql
-  data-nuevas-3-tablas.sql
-  static/imagenes-productos/
-```
-
-Arquitectura: **Controller → Service → Repository → MySQL**. No hay DTOs: las entidades JPA se serializan directo en JSON.
-
----
-
-## Limitaciones conocidas (estado actual)
-
-- Contraseñas en texto plano; `PasswordEncoder` (BCrypt) está declarado y no se usa en el registro.
-- Checkout acepta `cuponId` y **no aplica el descuento**.
-- Alta de producto con imagen no asigna `vendedor` (campo obligatorio en la entidad).
-- Subida de archivos escribe en `src/main/resources/...`; no funciona de forma fiable en un JAR.
-- `target/` está versionado; no hay `.gitignore`.
-- Un solo test; no hay CI.
-
-Plan de corrección y reestructura: [REESTRUCTURA.md](REESTRUCTURA.md).
+Detalle: [docs/05-CONTRATO-API.md](docs/05-CONTRATO-API.md).
