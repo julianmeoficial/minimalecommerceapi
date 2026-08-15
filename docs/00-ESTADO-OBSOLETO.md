@@ -1,6 +1,6 @@
 # 00 — Estado actual obsoleto
 
-El código bajo `src/main/java` es un **prototipo de API REST**. Sirve como referencia de dominio (marketplace comprador/vendedor), no como base que se “pulirá un poco” y se pondrá en producción.
+El código bajo `src/main/java` es un **prototipo de API REST reducido al núcleo comercial** (guía). Los módulos inacabados se eliminaron; ver [09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md). No es un producto ni el diseño destino.
 
 ## Declaración
 
