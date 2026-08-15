@@ -35,7 +35,8 @@ Fallas y oleadas de arreglo: [REESTRUCTURA.md](REESTRUCTURA.md) (histórico).
 | [docs/05-CONTRATO-API.md](docs/05-CONTRATO-API.md) | Superficie HTTP a preservar o rediseñar |
 | [docs/06-CAMBIO-DE-ENFOQUE.md](docs/06-CAMBIO-DE-ENFOQUE.md) | Si se cambia el enfoque (modular, micro, BaaS) |
 | [docs/07-CAMBIO-DE-STACK.md](docs/07-CAMBIO-DE-STACK.md) | Si se cambia el stack (Node, .NET, Go, serverless) |
-| [docs/08-PLAN-REMODELACION.md](docs/08-PLAN-REMODELACION.md) | Secuencia recomendada de remodelación |
+| [docs/08-PLAN-REMODELACION.md](docs/08-PLAN-REMODELACION.md) | Oleadas de remodelación |
+| [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md) | Código que queda en `src/` (guía) |
 
 ---
 
@@ -54,9 +55,8 @@ Requisitos: JDK 17, Maven Wrapper, MySQL 8 en `localhost:3306`.
 | API | `http://localhost:8080/api/**` |
 | Swagger UI | `http://localhost:8080/swagger-ui.html` |
 | OpenAPI | `http://localhost:8080/v3/api-docs` |
-| Imágenes | `http://localhost:8080/imagenes-productos/<archivo>` |
 
-La conexión MySQL está en `src/main/resources/application.properties`. Hay secretos en ese archivo: no los copies a otros entornos. El seed `data.sql` **no se ejecuta** contra MySQL (`spring.sql.init.mode=embedded`).
+La conexión MySQL está en `src/main/resources/application.properties` (`MYSQL_PASSWORD` o valor de guía). El seed `data.sql` es manual (`spring.sql.init.mode=never`).
 
 **Seguridad:** todas las rutas están abiertas (`permitAll`), las contraseñas van en texto plano, no hay JWT.
 
@@ -64,6 +64,6 @@ La conexión MySQL está en `src/main/resources/application.properties`. Hay sec
 
 ## Módulos HTTP actuales (superficie)
 
-`/api/auth` · `/api/usuarios` · `/api/productos` · `/api/categorias` · `/api/carrito` · `/api/pedidos` · `/api/pedidoitems` · `/api/cupones` · `/api/resenas` · `/api/favoritos` · `/api/direcciones` · `/api/preordenes` · `/api/notificaciones` · `/api/blogs` · `/api/eventos` · `/api/metricas-vendedor` · `/api/imagenes`
+`/api/auth` · `/api/usuarios` · `/api/productos` · `/api/categorias` · `/api/carrito` · `/api/pedidos`
 
-Detalle: [docs/05-CONTRATO-API.md](docs/05-CONTRATO-API.md).
+Los módulos satélite (cupones, reseñas, blog, eventos, etc.) se eliminaron del código. Detalle: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md).

@@ -1,6 +1,6 @@
 # Fallas, actualizaciones y reestructura de MinimalEcommerce
 
-> **Histórico.** El prototipo en `src/` está declarado **obsoleto**. La documentación canónica de remodelación (diagramas Mermaid, contrato API, cambio de enfoque y de stack) está en **[docs/README.md](docs/README.md)**.
+> **Histórico.** Varios módulos citados aquí (cupones, blog, imágenes, etc.) **ya no están en `src/`**. El núcleo que queda: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md). Diagramas y plan: **[docs/README.md](docs/README.md)**.
 
 Este documento no describe cómo está el código (eso está en [DOCUMENTACION.md](DOCUMENTACION.md)). Describe **por qué no escala**, **qué conviene arreglar ya** y **qué arquitectura distinta** debería sustituir al CRUD anémico actual.
 

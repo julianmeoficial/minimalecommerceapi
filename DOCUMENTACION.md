@@ -1,6 +1,6 @@
 # Documentación de MinimalEcommerce
 
-> **Histórico.** El estado descrito aquí es el prototipo **obsoleto**. Diagramas, contrato API, cambio de enfoque/stack y plan de remodelación: **[docs/README.md](docs/README.md)**.
+> **Histórico del prototipo amplio.** El código en `src/` se redujo al núcleo de guía ([docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md)). Los endpoints y entidades listados abajo describen el estado *antes* de borrar satélites; no coinciden ya con el árbol fuente.
 
 Análisis del repositorio `minimalecommerce` (GitHub: `julianmeoficial/minimalecommerce`). Complementa el [README.md](README.md) (estado y arranque) y [REESTRUCTURA.md](REESTRUCTURA.md) (fallas y enfoque futuro).
 
