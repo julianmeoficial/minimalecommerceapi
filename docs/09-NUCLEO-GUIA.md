@@ -1,59 +1,40 @@
-# 09 — Núcleo de guía (código que queda)
+# 09 — Bases del proyecto (código vivo)
 
-Tras borrar código muerto e inacabado, `src/` solo conserva el **ciclo comercial** como referencia. El stack no cambió (Java 17, Spring Boot 3.5, MySQL).
+`src/` es solo el **esqueleto** de la API. No hay dominio de e-commerce en el árbol fuente.
 
-## Qué se dejó
+## Qué hay
 
 ```
-Usuario / TipoUsuario
-Categoria
-Producto
-Carritoitem
-Pedido / EstadoPedido
-Pedidoitem
+src/main/java/com/minimalecommerce/app/
+  MinimalecommerceApplication.java
+  config/       SecurityConfig, WebConfig, SwaggerConfig
+  controller/   HealthController  →  GET /api/health
+  exception/    GlobalExceptionHandler
+src/main/resources/application.properties
+src/test/.../MinimalecommerceApplicationTests.java
+pom.xml · mvnw · .gitignore
 ```
 
-HTTP:
+Dependencias (sin cambiar de stack): Web, Data JPA, Security, Validation, MySQL driver, Lombok, SpringDoc, DevTools, Test.
 
-| Prefijo | Rol |
-|---|---|
-| `/api/auth` | Un login |
-| `/api/usuarios` | Registro comprador/vendedor y listados |
-| `/api/categorias` | CRUD |
-| `/api/productos` | CRUD + stock + por vendedor |
-| `/api/carrito` | Alta, cantidad, vaciar, checkout |
-| `/api/pedidos` | Por usuario, detalle con líneas, estado, cancelar |
+JPA y MySQL **no se conectan al arrancar** (`spring.autoconfigure.exclude`). Se reactivan cuando existan entidades.
 
-## Qué se eliminó (no copiar en la reconstrucción)
+## Qué ya no está (a reconstruir, no a copiar del git viejo)
 
-- Blog, eventos, métricas de vendedor, notificaciones, preórdenes, favoritos, reseñas, cupones, direcciones (entidad)
-- `ImagenController` / `ImagenService` y binarios en `static/`
-- Login duplicado en `/api/usuarios/login`
-- CRUD suelto de `/api/pedidoitems`
-- Alta de producto con multipart al árbol `src/`
-- Flag `espreorden`, `cuponId` ignorado en checkout
-- SQL huérfano `data-nuevas-*.sql`
-- Artefactos `target/` versionados
-- Config de HTML estático que no existía
+Usuarios, categorías, productos, carrito, pedidos, y todos los satélites (cupones, reseñas, blog, imágenes, etc.).
 
-## Flujo que queda
+El mapa de capacidades y el ER histórico siguen en [02-MODELO-DATOS.md](02-MODELO-DATOS.md) y [05-CONTRATO-API.md](05-CONTRATO-API.md) como **memoria**, no como código.
 
 ```mermaid
 flowchart LR
-  Auth["POST /api/auth/login"]
-  User["POST /api/usuarios/registro"]
-  Cat["GET /api/categorias"]
-  Prod["GET POST /api/productos"]
-  Cart["POST /api/carrito/agregar"]
-  Co["POST /api/carrito/procesar-pedido"]
-  Ped["GET /api/pedidos"]
+  Boot["Spring Boot :8080"]
+  Health["GET /api/health"]
+  Swagger["Swagger / OpenAPI"]
+  Future["model repository service"]
 
-  User --> Auth
-  Cat --> Prod
-  Prod --> Cart
-  Auth --> Cart
-  Cart --> Co
-  Co --> Ped
+  Boot --> Health
+  Boot --> Swagger
+  Future -.->|reconstruir| Boot
 ```
 
-La reconstrucción debe partir de este núcleo, no reintroducir los módulos borrados hasta que el contrato v1 y la auth existan. Ver [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md).
+Siguiente paso: [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md) oleada A sobre este esqueleto.

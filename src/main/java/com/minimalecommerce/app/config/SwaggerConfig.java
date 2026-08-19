@@ -14,8 +14,8 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("MinimalEcommerce API")
-                        .version("1.0")
-                        .description("API REST para e-commerce minimalista"));
+                        .version("0.0.1-SNAPSHOT")
+                        .description("Base de API REST. El dominio se reconstruye desde cero."));
     }
 
     @Bean

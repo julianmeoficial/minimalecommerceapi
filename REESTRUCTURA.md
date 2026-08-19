@@ -1,6 +1,6 @@
 # Fallas, actualizaciones y reestructura de MinimalEcommerce
 
-> **Histórico.** Varios módulos citados aquí (cupones, blog, imágenes, etc.) **ya no están en `src/`**. El núcleo que queda: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md). Diagramas y plan: **[docs/README.md](docs/README.md)**.
+> **Histórico.** El código vivo es el esqueleto de la API ([docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md)). Los módulos citados aquí ya no están en `src/`.
 
 Este documento no describe cómo está el código (eso está en [DOCUMENTACION.md](DOCUMENTACION.md)). Describe **por qué no escala**, **qué conviene arreglar ya** y **qué arquitectura distinta** debería sustituir al CRUD anémico actual.
 
