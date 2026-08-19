@@ -13,7 +13,7 @@ flowchart LR
   Enf["06 Cambio de enfoque"]
   Stk["07 Cambio de stack"]
   Plan["08 Plan de remodelación"]
-  Nucleo["09 Núcleo de guía"]
+  Nucleo["09 Bases en src"]
 
   Obs --> Arch
   Arch --> Data
@@ -29,10 +29,10 @@ flowchart LR
 
 ## Cómo leerlo
 
-1. Si vienes del código actual: empieza por [00-ESTADO-OBSOLETO.md](00-ESTADO-OBSOLETO.md) y los diagramas 01–04.
-2. Si vas a **seguir en Spring** pero cambiar el diseño: [06-CAMBIO-DE-ENFOQUE.md](06-CAMBIO-DE-ENFOQUE.md) y [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md).
-3. Si vas a **cambiar de tecnología**: [07-CAMBIO-DE-STACK.md](07-CAMBIO-DE-STACK.md) (el contrato de [05](05-CONTRATO-API.md) es lo que hay que migrar o rediseñar).
-4. El código vivo de guía: [09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md).
+1. Código vivo (esqueleto): [09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md).
+2. Si vienes del prototipo viejo: [00-ESTADO-OBSOLETO.md](00-ESTADO-OBSOLETO.md) y diagramas 01–04 (histórico).
+3. Si vas a **seguir en Spring**: [06-CAMBIO-DE-ENFOQUE.md](06-CAMBIO-DE-ENFOQUE.md) y [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md).
+4. Si vas a **cambiar de tecnología**: [07-CAMBIO-DE-STACK.md](07-CAMBIO-DE-STACK.md).
 
 Documentos históricos en la raíz (anteriores a esta carpeta):
 

@@ -1,6 +1,6 @@
 # Documentación de MinimalEcommerce
 
-> **Histórico del prototipo amplio.** El código en `src/` se redujo al núcleo de guía ([docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md)). Los endpoints y entidades listados abajo describen el estado *antes* de borrar satélites; no coinciden ya con el árbol fuente.
+> **Histórico.** El código vivo es solo el esqueleto ([docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md)). Este archivo describe el prototipo amplio *antes* de vaciar `src/`.
 
 Análisis del repositorio `minimalecommerce` (GitHub: `julianmeoficial/minimalecommerce`). Complementa el [README.md](README.md) (estado y arranque) y [REESTRUCTURA.md](REESTRUCTURA.md) (fallas y enfoque futuro).
 

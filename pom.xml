@@ -14,7 +14,7 @@
     <artifactId>minimalecommerce</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>MinimalEcommerce</name>
-    <description>E-commerce minimalista</description>
+    <description>Base de API REST (esqueleto para reconstruir el dominio)</description>
 
     <properties>
         <java.version>17</java.version>
