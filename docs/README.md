@@ -29,7 +29,7 @@ flowchart LR
 
 ## Cómo leerlo
 
-1. Código vivo (esqueleto): [09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md).
+1. Código vivo (esqueleto sin HTTP de negocio): [09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md).
 2. Si vienes del prototipo viejo: [00-ESTADO-OBSOLETO.md](00-ESTADO-OBSOLETO.md) y diagramas 01–04 (histórico).
 3. Si vas a **seguir en Spring**: [06-CAMBIO-DE-ENFOQUE.md](06-CAMBIO-DE-ENFOQUE.md) y [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md).
 4. Si vas a **cambiar de tecnología**: [07-CAMBIO-DE-STACK.md](07-CAMBIO-DE-STACK.md).

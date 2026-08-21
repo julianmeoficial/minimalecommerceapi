@@ -1,38 +1,30 @@
-# MinimalEcommerce — bases de la API
+# MinimalEcommerce — esqueleto
 
-Esqueleto Spring Boot para **reconstruir** el marketplace. El dominio anterior (usuarios, catálogo, carrito, pedidos y satélites) **ya no está en `src/`**.
+Spring Boot vacío para **cambiar de arquitectura**. No hay controladores, ni capas controller/service/repository, ni dominio.
 
-Documentación de lo que había y cómo remodelar: **[docs/README.md](docs/README.md)**.
+Memoria del prototipo y opciones de remodelación: **[docs/README.md](docs/README.md)**.
 
-## Qué queda en código
+## Código vivo
 
 | Pieza | Rol |
 |---|---|
-| `pom.xml` | Java 17, Spring Boot 3.5, Web, JPA, Security, Validation, MySQL, OpenAPI |
+| `pom.xml` | Java 17 · Spring Boot 3.5 · Web · JPA · Security · Validation · MySQL · OpenAPI |
 | `MinimalecommerceApplication` | Arranque |
-| `config/` | Security (`permitAll` + BCrypt listo), CORS, Swagger |
-| `exception/` | Handler global |
-| `GET /api/health` | Único endpoint vivo |
-| `application.properties` | Puerto 8080; JPA/MySQL comentados hasta que exista dominio |
+| `SecurityConfig` | Evita el login por defecto de Spring Security; BCrypt disponible |
+| `application.properties` | Puerto 8080; JPA/MySQL desconectados |
 
-Paquetes `model/`, `repository/` y `service/` están vacíos a propósito: ahí va la reconstrucción.
+No hay `controller/`, `model/`, `service/`, `repository/`, CORS, Swagger propio ni handler de excepciones. Eso entra con la arquitectura nueva.
 
 ## Arranque
 
-JDK 17 y Maven Wrapper. **No hace falta MySQL** hasta activar JPA.
+JDK 17. No hace falta MySQL.
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-| Recurso | URL |
-|---|---|
-| Salud | `http://localhost:8080/api/health` |
-| Swagger UI | `http://localhost:8080/swagger-ui.html` |
-| OpenAPI | `http://localhost:8080/v3/api-docs` |
-
-Al añadir entidades: quitar `spring.autoconfigure.exclude` y descomentar el datasource en `application.properties`.
+Tomcat en `http://localhost:8080` (sin rutas de negocio).
 
 ## Docs
 
-Histórico y plan (el código vivo ya no implementa esos flujos): [docs/](docs/README.md). Lo que hay ahora en `src/`: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md).
+[docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md) describe este esqueleto. El resto de `docs/` es histórico / plan.
