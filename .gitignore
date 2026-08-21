@@ -1,7 +1,4 @@
-target/
 .idea/
-*.iml
 .env
 *.log
 .DS_Store
-*.class

@@ -1,6 +1,6 @@
 # Fallas, actualizaciones y reestructura de MinimalEcommerce
 
-> **Histórico.** El código vivo es el esqueleto de la API ([docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md)). Los módulos citados aquí ya no están en `src/`.
+> **Histórico.** No hay runtime. El árbol de archivos: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md).
 
 Este documento no describe cómo está el código (eso está en [DOCUMENTACION.md](DOCUMENTACION.md)). Describe **por qué no escala**, **qué conviene arreglar ya** y **qué arquitectura distinta** debería sustituir al CRUD anémico actual.
 

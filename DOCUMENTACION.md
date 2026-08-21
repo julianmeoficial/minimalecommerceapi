@@ -1,6 +1,6 @@
 # Documentación de MinimalEcommerce
 
-> **Histórico.** El código vivo es solo el esqueleto ([docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md)). Este archivo describe el prototipo amplio *antes* de vaciar `src/`.
+> **Histórico.** No hay código ni Spring Boot en `src/`. Solo el árbol de paquetes: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md).
 
 Análisis del repositorio `minimalecommerce` (GitHub: `julianmeoficial/minimalecommerce`). Complementa el [README.md](README.md) (estado y arranque) y [REESTRUCTURA.md](REESTRUCTURA.md) (fallas y enfoque futuro).
 
