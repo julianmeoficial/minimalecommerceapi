@@ -1,6 +1,6 @@
 # 00 — Estado actual obsoleto
 
-El código bajo `src/` es el **esqueleto de la API** ([09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md)). El dominio se reconstruye; no hay que pulir el prototipo viejo.
+El código bajo `src/` es un **esqueleto Spring Boot sin controladores** ([09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md)). La arquitectura en capas del prototipo se reconstruye; no hay que reintroducir `controller/service/repository` por inercia.
 
 ## Declaración
 

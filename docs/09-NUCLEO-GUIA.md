@@ -1,40 +1,34 @@
-# 09 — Bases del proyecto (código vivo)
+# 09 — Esqueleto (sin controladores)
 
-`src/` es solo el **esqueleto** de la API. No hay dominio de e-commerce en el árbol fuente.
+`src/` ya no tiene la arquitectura en capas del prototipo. Sirve para **montar otra arquitectura** encima del mismo runtime.
 
 ## Qué hay
 
 ```
 src/main/java/com/minimalecommerce/app/
   MinimalecommerceApplication.java
-  config/       SecurityConfig, WebConfig, SwaggerConfig
-  controller/   HealthController  →  GET /api/health
-  exception/    GlobalExceptionHandler
+  config/SecurityConfig.java
 src/main/resources/application.properties
 src/test/.../MinimalecommerceApplicationTests.java
 pom.xml · mvnw · .gitignore
 ```
 
-Dependencias (sin cambiar de stack): Web, Data JPA, Security, Validation, MySQL driver, Lombok, SpringDoc, DevTools, Test.
+Se quitó: todos los `@RestController`, `WebConfig` (CORS), `SwaggerConfig`, `GlobalExceptionHandler`, y el `GET /api/health`.
 
-JPA y MySQL **no se conectan al arrancar** (`spring.autoconfigure.exclude`). Se reactivan cuando existan entidades.
+`SecurityConfig` se mantiene porque `spring-boot-starter-security` está en el `pom`: sin cadena de filtros, Boot 3 bloquearía el arranque con login por defecto. Se reescribe con la nueva arquitectura.
 
-## Qué ya no está (a reconstruir, no a copiar del git viejo)
-
-Usuarios, categorías, productos, carrito, pedidos, y todos los satélites (cupones, reseñas, blog, imágenes, etc.).
-
-El mapa de capacidades y el ER histórico siguen en [02-MODELO-DATOS.md](02-MODELO-DATOS.md) y [05-CONTRATO-API.md](05-CONTRATO-API.md) como **memoria**, no como código.
+JPA/MySQL siguen en dependencias y **no se conectan** hasta quitar `spring.autoconfigure.exclude`.
 
 ```mermaid
 flowchart LR
-  Boot["Spring Boot :8080"]
-  Health["GET /api/health"]
-  Swagger["Swagger / OpenAPI"]
-  Future["model repository service"]
+  Pom["pom.xml stack"]
+  Main["SpringApplication"]
+  Sec["SecurityConfig minimo"]
+  NewArch["Nueva arquitectura"]
 
-  Boot --> Health
-  Boot --> Swagger
-  Future -.->|reconstruir| Boot
+  Pom --> Main
+  Main --> Sec
+  NewArch -.->|reemplaza capas| Main
 ```
 
-Siguiente paso: [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md) oleada A sobre este esqueleto.
+Histórico de capas y flujos: docs 01–05. Plan: [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md).
