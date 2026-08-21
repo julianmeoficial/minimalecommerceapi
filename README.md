@@ -1,30 +1,47 @@
-# MinimalEcommerce — esqueleto
+# MinimalEcommerce — árbol de archivos
 
-Spring Boot vacío para **cambiar de arquitectura**. No hay controladores, ni capas controller/service/repository, ni dominio.
+Sin Spring Boot, Maven ni código. Solo **carpetas y relaciones** para reconstruir.
 
-Memoria del prototipo y opciones de remodelación: **[docs/README.md](docs/README.md)**.
+Memoria del prototipo: [docs/README.md](docs/README.md).
 
-## Código vivo
+## Árbol
 
-| Pieza | Rol |
-|---|---|
-| `pom.xml` | Java 17 · Spring Boot 3.5 · Web · JPA · Security · Validation · MySQL · OpenAPI |
-| `MinimalecommerceApplication` | Arranque |
-| `SecurityConfig` | Evita el login por defecto de Spring Security; BCrypt disponible |
-| `application.properties` | Puerto 8080; JPA/MySQL desconectados |
-
-No hay `controller/`, `model/`, `service/`, `repository/`, CORS, Swagger propio ni handler de excepciones. Eso entra con la arquitectura nueva.
-
-## Arranque
-
-JDK 17. No hace falta MySQL.
-
-```bash
-./mvnw spring-boot:run
+```
+.
+├── README.md
+├── DOCUMENTACION.md          # histórico
+├── REESTRUCTURA.md           # histórico
+├── .gitignore
+├── docs/                     # plan y diagramas (no es runtime)
+└── src/
+    ├── main/
+    │   ├── java/com/minimalecommerce/app/
+    │   │   ├── config/
+    │   │   ├── controller/
+    │   │   ├── service/
+    │   │   ├── repository/
+    │   │   ├── model/
+    │   │   └── exception/
+    │   └── resources/
+    └── test/java/com/minimalecommerce/app/
 ```
 
-Tomcat en `http://localhost:8080` (sin rutas de negocio).
+## Relaciones (paquetes)
 
-## Docs
+```mermaid
+flowchart TB
+  App["com.minimalecommerce.app"]
+  App --> config
+  App --> controller
+  App --> service
+  App --> repository
+  App --> model
+  App --> exception
+  controller --> service
+  service --> repository
+  repository --> model
+  controller --> exception
+  config --> App
+```
 
-[docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md) describe este esqueleto. El resto de `docs/` es histórico / plan.
+Las carpetas están vacías (`.gitkeep`). No hay `pom.xml`, `Application`, ni dependencias.

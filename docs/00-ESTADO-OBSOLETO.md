@@ -1,6 +1,6 @@
 # 00 — Estado actual obsoleto
 
-El código bajo `src/` es un **esqueleto Spring Boot sin controladores** ([09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md)). La arquitectura en capas del prototipo se reconstruye; no hay que reintroducir `controller/service/repository` por inercia.
+El repositorio es un **árbol de paquetes vacío**, sin Spring Boot ni Maven ([09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md)). El prototipo y su esquema de framework se eliminaron.
 
 ## Declaración
 
