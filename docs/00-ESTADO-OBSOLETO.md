@@ -1,6 +1,6 @@
 # 00 — Estado actual obsoleto
 
-El repositorio es un **árbol de paquetes vacío**, sin Spring Boot ni Maven ([09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md)). El prototipo y su esquema de framework se eliminaron.
+El repositorio implementa un **monolito modular Spring Boot** ([09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md)). El prototipo en capas y su esquema de framework se documentan aquí como archivo.
 
 ## Declaración
 

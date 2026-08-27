@@ -1,6 +1,6 @@
 # Fallas, actualizaciones y reestructura de MinimalEcommerce
 
-> **Histórico.** No hay runtime. El árbol de archivos: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md).
+> **Histórico.** La implementación vigente (monolito modular, JWT, Flyway, checkout con cupón) está en [README.md](README.md).
 
 Este documento no describe cómo está el código (eso está en [DOCUMENTACION.md](DOCUMENTACION.md)). Describe **por qué no escala**, **qué conviene arreglar ya** y **qué arquitectura distinta** debería sustituir al CRUD anémico actual.
 

@@ -1,39 +1,55 @@
-# 09 — Árbol de archivos (sin framework)
+# 09 — Árbol de archivos (monolito modular)
 
-Spring Boot y Maven se eliminaron. `src/` es un **árbol de paquetes vacío**.
-
-## Árbol vivo
+La API vive en un solo artefacto Maven. Los paquetes son **módulos de dominio**, no capas técnicas globales.
 
 ```
-src/main/java/com/minimalecommerce/app/
-  config/
-  controller/
-  service/
-  repository/
-  model/
-  exception/
-src/main/resources/
-src/test/java/com/minimalecommerce/app/
+.
+├── pom.xml
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example
+├── src/main/java/com/minimalecommerce/
+│   ├── MinimalecommerceApplication.java
+│   ├── shared/          # kernel: errores, JWT, media, eventos
+│   ├── identity/        # usuarios, auth, direcciones
+│   ├── catalog/         # productos, categorías, stock, media HTTP
+│   ├── promotions/      # cupones (puerto del checkout)
+│   ├── ordering/        # carrito, pedidos, preórdenes
+│   ├── engagement/      # reseñas, favoritos, notificaciones
+│   ├── content/         # blog, eventos
+│   └── analytics/       # proyección de métricas de vendedor
+├── src/main/resources/
+│   ├── application.yml
+│   ├── application-dev.yml
+│   ├── application-docker.yml
+│   └── db/migration/    # Flyway
+└── src/test/            # H2 + MockMvc (checkout, auth, stock)
 ```
 
-## Relaciones previstas (no implementadas)
+Cada módulo sigue el mismo interior:
+
+```
+api/           controladores HTTP + DTOs (records)
+application/   casos de uso
+domain/        entidades y enums (sin anotaciones web)
+infrastructure/ repositorios JPA
+```
 
 ```mermaid
-flowchart LR
-  C[controller]
-  S[service]
-  R[repository]
-  M[model]
-  X[exception]
-  G[config]
-
-  C --> S
-  S --> R
-  R --> M
-  C --> X
-  G -.-> C
+flowchart TB
+  HTTP["/api/v1 JWT"]
+  HTTP --> identity
+  HTTP --> catalog
+  HTTP --> ordering
+  HTTP --> promotions
+  HTTP --> engagement
+  HTTP --> content
+  HTTP --> analytics
+  ordering --> catalog
+  ordering --> promotions
+  ordering -->|"OrderPlaced"| engagement
+  ordering -->|"OrderPlaced"| analytics
+  catalog --> media["MediaStore"]
 ```
 
-Esto **no** obliga a repetir la arquitectura en capas. Es el mapa de carpetas que dejó el prototipo. La nueva arquitectura puede usar estas carpetas o sustituirlas.
-
-Histórico: docs 01–05. Enfoque/stack: 06–08.
+Histórico del prototipo en capas: docs 00–08.
