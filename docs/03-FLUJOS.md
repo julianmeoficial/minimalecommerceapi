@@ -1,118 +1,138 @@
-# 03 — Flujos actuales de la API
+# 03 — Flujos
 
-Flujos del prototipo. Los huecos (líneas punteadas) son parte de la obsolescencia.
+Flujos implementados hoy en NestJS. El sujeto autenticado sale del JWT (`AuthUser.userId`).
 
-## Autenticación (insegura)
+## Autenticación
 
-Hay **dos** logins incompatibles.
+Un solo registro y un solo login.
 
 ```mermaid
 sequenceDiagram
   participant C as Cliente
   participant Auth as AuthController
-  participant Usr as UsuarioController
-  participant Svc as UsuarioService
-  participant DB as MySQL
+  participant Svc as AuthService
+  participant DB as Postgres
 
-  alt POST /api/auth/login
-    C->>Auth: email password
-    Auth->>Svc: authenticateUser
-    Svc->>DB: findByEmail
-    Svc->>Svc: password.equals plano
-    Auth-->>C: user con password null
-  else POST /api/usuarios/login
-    C->>Usr: email password
-    Usr->>Svc: login
-    Svc->>DB: findByEmailAndPassword JPQL
-    Usr-->>C: usuario CON password
-  end
+  C->>Auth: POST /api/v1/auth/register
+  Auth->>Svc: RegisterDto (rol ≠ SUPERADMIN)
+  Svc->>DB: email único + Argon2 hash
+  Svc-->>C: token JWT + user (sin password)
+
+  C->>Auth: POST /api/v1/auth/login
+  Auth->>Svc: LoginDto
+  Svc->>DB: verify Argon2
+  Svc-->>C: token JWT + user
+
+  C->>Auth: GET /api/v1/me (Bearer)
+  Auth-->>C: perfil
 ```
 
-No hay token. El cliente reenvía `usuarioId` en cada llamada. Cualquiera puede usar el id de otro.
+Roles: `COMPRADOR`, `VENDEDOR`, `SUPERADMIN`. Endpoints mutadores usan `RolesGuard`.
 
-## Catálogo y alta con imagen
+## Catálogo e inventario
 
 ```mermaid
 flowchart TD
-  Get["GET /api/productos"] --> Activos["findByActivoTrue"]
-  PostJson["POST /api/productos JSON"] --> Crear["ProductoService.crearProducto"]
-  Crear --> CatCheck["Categoria debe existir"]
-  CatCheck --> Save["save Hibernate"]
-  Multipart["POST /api/productos/crear-con-imagen"] --> Copy["Files.copy a src/static"]
-  Copy --> Crear2["crearProducto"]
-  Crear2 -.->|no asigna vendedor| Save2["save puede fallar NOT NULL vendedorid"]
+  List["GET /products público"] --> Cache["cache-manager"]
+  Cache --> Prisma["Prisma findMany paginado"]
+  Create["POST /products VENDEDOR"] --> Stock["stock inicial en product"]
+  Image["POST /products/:id/image"] --> Media["MediaStore local o Supabase"]
+  Media --> Url["image_url en product"]
+  Mutate["create/update/delete"] --> Invalidate["invalida caché de catálogo"]
 ```
 
-## Carrito y checkout (core)
+Stock se decrementa solo en checkout (`InventoryService.decrementIfAvailable` con `UPDATE … WHERE stock >= qty`).
+
+## Carrito y checkout
 
 ```mermaid
 sequenceDiagram
-  participant C as Cliente
-  participant Cart as CarritoitemController
-  participant Svc as CarritoitemService
-  participant DB as MySQL
+  participant C as Comprador
+  participant Cart as CartController
+  participant Co as CheckoutService
+  participant Inv as Inventory
+  participant Cup as CouponsService
+  participant DB as Postgres
+  participant Ev as EventEmitter
 
-  C->>Cart: POST /api/carrito/agregar
-  Cart->>Svc: usuarioId productoId cantidad
-  Svc->>DB: stock y linea existente
-  Svc-->>Cart: Carritoitem
-  Cart-->>C: 200
-
-  C->>Cart: POST /api/carrito/procesar-pedido
-  Note over Cart: lee cuponId
-  Cart->>Svc: procesarPedido usuarioId direccion cuponId
-  Note over Svc: cuponId NO se usa
-  Svc->>DB: validar stock
-  Svc->>DB: INSERT pedido PENDIENTE
-  Svc->>DB: INSERT pedidoitem
-  Svc->>DB: UPDATE producto.stock
-  Svc->>DB: DELETE carrito del usuario
-  Svc-->>C: pedido items subtotal
+  C->>Cart: POST /cart/items
+  Cart->>DB: upsert cart_item
+  C->>Cart: POST /cart/checkout + Idempotency-Key
+  Cart->>Co: CheckoutDto
+  alt Idempotency-Key existente
+    Co-->>C: mismo pedido
+  else Nuevo
+    Co->>DB: BEGIN
+    loop líneas
+      Co->>Inv: requireActive + decrementIfAvailable
+    end
+    opt couponCode
+      Co->>Cup: redeem atómico
+    end
+    Co->>DB: INSERT order + items PENDIENTE_PAGO
+    Co->>DB: DELETE cart
+    Co->>DB: COMMIT
+    Co->>Ev: order.placed
+    Co-->>C: OrderResponse
+  end
 ```
+
+Estados de pedido:
 
 ```mermaid
 stateDiagram-v2
-  [*] --> PENDIENTE: checkout
-  PENDIENTE --> CONFIRMADO: PUT estado
-  CONFIRMADO --> ENVIADO: PUT estado
-  ENVIADO --> ENTREGADO: PUT estado
-  PENDIENTE --> CANCELADO: cancelar
-  CONFIRMADO --> CANCELADO: cancelar
-  ENVIADO --> CANCELADO: cancelar
-  ENTREGADO --> [*]: no cancelable
+  [*] --> PENDIENTE_PAGO: checkout
+  PENDIENTE_PAGO --> PAGADO: payment confirm
+  PAGADO --> CONFIRMADO: vendedor
+  CONFIRMADO --> ENVIADO: vendedor
+  ENVIADO --> ENTREGADO: vendedor
+  PENDIENTE_PAGO --> CANCELADO: comprador
+  PAGADO --> CANCELADO: comprador
+  CONFIRMADO --> CANCELADO: comprador
+  CANCELADO --> [*]: restore stock
+  ENTREGADO --> [*]
 ```
 
-No hay estado de pago. El cambio de estado no comprueba que el llamador sea el vendedor del SKU.
+## Pagos
 
-## Cupón (módulo huérfano respecto al cobro)
+```mermaid
+sequenceDiagram
+  participant C as Comprador
+  participant Pay as PaymentsService
+  participant GW as PaymentGateway
+  participant DB as Postgres
+
+  C->>Pay: POST /payments/orders/:id/intent
+  Pay->>GW: createPaymentIntent
+  GW-->>Pay: externalId + clientSecret
+  Pay->>DB: upsert payment PENDING
+  Pay-->>C: intent
+
+  C->>Pay: POST /payments/orders/:id/confirm
+  Pay->>GW: confirmPayment
+  alt SUCCEEDED
+    Pay->>DB: payment SUCCEEDED + order PAGADO
+  end
+  Pay-->>C: status
+```
+
+Sin `STRIPE_SECRET_KEY` el gateway usa mock local (útil en e2e).
+
+## Eventos post-pedido
 
 ```mermaid
 flowchart LR
-  CRUD["CRUD /api/cupones"] --> Valid["validar vigencia usos"]
-  Valid --> Aplicar["POST /aplicar incrementa usos"]
-  Checkout["POST /carrito/procesar-pedido"] -.->|cuponId ignorado| Total["total = suma lineas"]
+  Checkout -->|"emit order.placed"| Bus["EventEmitter"]
+  Bus --> Notif["NotificationsService → BullMQ"]
+  Bus --> Reports["ReportsService → seller_metrics"]
+  Notif --> Worker["NotificationsProcessor"]
+  Worker --> Rows["INSERT notifications"]
 ```
 
-## Imágenes
+El checkout **no espera** a Redis/BullMQ para responder; las notificaciones son asíncronas.
 
-```mermaid
-flowchart TB
-  Up["POST /api/imagenes/subir"] --> Svc["ImagenService"]
-  Svc --> PathA["user.dir/backend/src/..."]
-  PathA -->|no existe| PathB["user.dir/src/main/resources/static/imagenes-productos/"]
-  PathB --> UUID["UUID + extension"]
-  Get["GET /imagenes-productos/file"] --> Classpath["classpath:/static/imagenes-productos/"]
-```
+## Cupones y feature flags
 
-Subida y lectura no comparten garantía de path; en un JAR la escritura al árbol `src/` no aplica.
-
-## Preorden y métricas (desconectadas del core)
-
-```mermaid
-flowchart LR
-  Pre["Preorden estados propios"] -.->|no convierte| Ped["Pedido"]
-  Ped -.->|no dispara| Met["Metricavendedor"]
-  Met["POST .../actualizar"] --> Tabla["Filas agregadas a mano"]
-```
-
-Estos flujos son el mapa a **rediseñar** (eventos de dominio `OrderPlaced`, conversión preorden→pedido, proyección de métricas), no a copiar línea a línea. Plan: [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md).
+- Crear cupón: `POST /coupons` (vendedor / superadmin).
+- Aplicar: solo dentro del checkout (`redeem` incrementa `current_uses`).
+- Reseñas, favoritos, blog y eventos consultan `feature_flags` antes de operar.

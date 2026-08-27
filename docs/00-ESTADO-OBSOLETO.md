@@ -10,14 +10,14 @@ Se ocupa:
 2. **Reestructura** — paquetes planos `controller/service/repository/model` mezclan todos los bounded contexts.
 3. **Nuevo planteamiento** — o se pasa a un monolito modular con la misma API versionada, o se cambia de enfoque/stack (docs 06 y 07). En ambos casos el destino **no** es más CRUD sobre entidades JPA.
 
-## Qué se conserva como valor
+## ¿Qué se conserva como valor?
 
 - El **mapa de capacidades**: catálogo, carrito, pedido, cupón, reseña, favorito, dirección, preorden, notificación, blog, evento, métricas, imágenes.
 - El **núcleo comercial**: `Usuario → Producto → Carritoitem → Pedido`.
 - Los **roles** COMPRADOR / VENDEDOR.
 - Swagger como idea (no la versión 2.1.0 concreta).
 
-## Qué se descarta como diseño
+## ¿Qué se descarta como diseño?
 
 ```mermaid
 flowchart TB

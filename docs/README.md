@@ -1,40 +1,23 @@
-# Documentación de remodelación — MinimalEcommerce API
+# Documentación — MinimalEcommerce API
 
-El código en `src/` implementa el monolito modular descrito en [09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md). El prototipo en capas se considera obsoleto.
+Documentación operativa del backend actual (NestJS). Empieza por el [README de la raíz](../README.md) para arrancar; aquí está el detalle.
 
-```mermaid
-flowchart LR
-  Obs["00 Estado obsoleto"]
-  Arch["01 Arquitectura API"]
-  Data["02 Modelo de datos"]
-  Flow["03 Flujos"]
-  Conn["04 Conexiones"]
-  Api["05 Contrato HTTP"]
-  Enf["06 Cambio de enfoque"]
-  Stk["07 Cambio de stack"]
-  Plan["08 Plan de remodelación"]
-  Nucleo["09 Arbol de archivos"]
+## Índice
 
-  Obs --> Arch
-  Arch --> Data
-  Data --> Flow
-  Flow --> Conn
-  Conn --> Api
-  Api --> Enf
-  Api --> Stk
-  Enf --> Plan
-  Stk --> Plan
-  Plan --> Nucleo
-```
+| Doc | Contenido |
+|---|---|
+| [01 — Arquitectura](01-ARQUITECTURA-API.md) | Monolito modular, stack, request path |
+| [02 — Modelo de datos](02-MODELO-DATOS.md) | Prisma, ER, enums, núcleo vs satélites |
+| [03 — Flujos](03-FLUJOS.md) | Auth, catálogo, checkout, pagos, eventos |
+| [04 — Conexiones](04-CONEXIONES.md) | Despliegue local, Redis, Supabase, Stripe |
+| [05 — Contrato HTTP](05-CONTRATO-API.md) | Superficie `/api/v1`, errores, paginación |
+| [06 — Estructura del repo](06-ESTRUCTURA.md) | Árbol de archivos y módulos |
+| [07 — Desarrollo](07-DESARROLLO.md) | Scripts, seed, tests, variables de entorno |
 
-## Cómo leerlo
+También: [CHANGELOG](../CHANGELOG.md) · [CONTRIBUTING](../CONTRIBUTING.md)
 
-1. Árbol vivo (monolito modular): [09-NUCLEO-GUIA.md](09-NUCLEO-GUIA.md).
-2. Si vienes del prototipo viejo: [00-ESTADO-OBSOLETO.md](00-ESTADO-OBSOLETO.md) y diagramas 01–04 (histórico).
-3. Si vas a **seguir en Spring**: [06-CAMBIO-DE-ENFOQUE.md](06-CAMBIO-DE-ENFOQUE.md) y [08-PLAN-REMODELACION.md](08-PLAN-REMODELACION.md).
-4. Si vas a **cambiar de tecnología**: [07-CAMBIO-DE-STACK.md](07-CAMBIO-DE-STACK.md).
+## Principios
 
-Documentos históricos en la raíz (anteriores a esta carpeta):
-
-- [../DOCUMENTACION.md](../DOCUMENTACION.md) — inventario detallado de clases y endpoints
-- [../REESTRUCTURA.md](../REESTRUCTURA.md) — fallas y oleadas A/B/C
+1. El contrato HTTP y los diagramas describen **lo que hay en el código**, no un plan futuro.
+2. Las entidades Prisma no salen por HTTP: siempre DTOs.
+3. OpenAPI en `/docs` es la fuente viva de schemas de request/response.

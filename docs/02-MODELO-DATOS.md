@@ -1,206 +1,125 @@
-# 02 — Modelo de datos y conexión a MySQL
+# 02 — Modelo de datos
 
-Hibernate es el dueño del esquema (`ddl-auto=update`). No hay Flyway. Las tablas se llaman como las entidades, en minúsculas.
+Fuente de verdad: [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma).
+Migraciones en `apps/api/prisma/migrations/`. IDs: **UUID**. Contraseñas: solo `password_hash` (nunca en respuestas).
 
-## Conexión actual
+## Conexión
 
 ```mermaid
-flowchart TB
-  App["Spring Boot"]
-  DS["Datasource JDBC"]
-  URL["jdbc:mysql://localhost:3306/minimalecommerce"]
-  Flags["createDatabaseIfNotExist useSSL=false allowPublicKeyRetrieval"]
-  Hib["SessionFactory ddl-auto=update"]
-  DB["MySQL 8"]
-
-  App --> DS
-  DS --> URL
-  URL --> Flags
-  App --> Hib
-  Hib --> DB
-  DS --> DB
+flowchart LR
+  Nest["NestJS PrismaService"] --> URL["DATABASE_URL"]
+  URL --> PG["PostgreSQL 16"]
+  PG --> Local["Docker Compose / local"]
+  PG --> Supa["Supabase (prod/dev cloud)"]
 ```
 
-Credenciales: `spring.datasource.username` / `password` en `application.properties` (secretos en git). Driver: `mysql-connector-j`.
+Variables: ver `.env.example` (`DATABASE_URL`). RLS está habilitado en tablas sensibles como segunda barrera; la API conecta con rol de aplicación.
 
-## Diagrama entidad-relación (prototipo)
+## Diagrama entidad-relación
 
 ```mermaid
 erDiagram
-  USUARIO ||--o{ PRODUCTO : vende
-  CATEGORIA ||--o{ PRODUCTO : clasifica
-  USUARIO ||--o{ CARRITOITEM : tiene
-  PRODUCTO ||--o{ CARRITOITEM : en
-  USUARIO ||--o{ PEDIDO : compra
-  PEDIDO ||--|{ PEDIDOITEM : contiene
-  PRODUCTO ||--o{ PEDIDOITEM : linea
-  USUARIO ||--o{ CUPON : crea
-  USUARIO ||--o{ RESENA : escribe
-  PRODUCTO ||--o{ RESENA : recibe
-  USUARIO ||--o{ FAVORITO : marca
-  PRODUCTO ||--o{ FAVORITO : es
-  USUARIO ||--o{ DIRECCION : posee
-  USUARIO ||--o{ PREORDEN : solicita
-  PRODUCTO ||--o{ PREORDEN : reserva
-  USUARIO ||--o{ NOTIFICACION : recibe
-  USUARIO ||--o{ BLOG : autor
-  CATEGORIA ||--o{ BLOG : tema
-  USUARIO ||--o{ EVENTO : organiza
-  USUARIO ||--o{ METRICAVENDEDOR : agrega
+  USER ||--o{ ADDRESS : tiene
+  USER ||--o{ PRODUCT : vende
+  CATEGORY ||--o{ PRODUCT : clasifica
+  USER ||--o{ CART_ITEM : tiene
+  PRODUCT ||--o{ CART_ITEM : en
+  USER ||--o{ ORDER : compra
+  ORDER ||--|{ ORDER_ITEM : contiene
+  COUPON ||--o{ ORDER : aplica
+  ORDER ||--o| PAYMENT : cobra
+  USER ||--o{ COUPON : crea
+  USER ||--o{ REVIEW : escribe
+  PRODUCT ||--o{ REVIEW : recibe
+  USER ||--o{ FAVORITE : marca
+  PRODUCT ||--o{ FAVORITE : es
+  USER ||--o{ NOTIFICATION : recibe
+  USER ||--o{ BLOG_POST : autor
+  CATEGORY ||--o{ BLOG_POST : tema
+  USER ||--o{ EVENT : organiza
+  SELLER_METRIC }o--|| USER : agrega
 
-  USUARIO {
-    long id PK
+  USER {
+    uuid id PK
     string email UK
-    string password
-    string tipousuario
-    boolean activo
+    string password_hash
+    enum role
+    boolean active
   }
-  PRODUCTO {
-    long id PK
-    long categoriaid FK
-    long vendedorid FK
-    decimal precio
+  PRODUCT {
+    uuid id PK
+    uuid category_id FK
+    uuid seller_id FK
+    decimal price
     int stock
-    string imagen
-    boolean espreorden
-    boolean activo
+    string image_url
+    boolean preorder
+    boolean active
   }
-  CATEGORIA {
-    long id PK
-    string nombre UK
-  }
-  CARRITOITEM {
-    long id PK
-    long usuarioid FK
-    long productoid FK
-    int cantidad
-    decimal preciounitario
-  }
-  PEDIDO {
-    long id PK
-    long usuarioid FK
+  ORDER {
+    uuid id PK
+    uuid buyer_id FK
+    decimal subtotal
+    decimal discount
     decimal total
-    string estado
-    string direccionentrega
+    enum status
+    string idempotency_key
   }
-  PEDIDOITEM {
-    long id PK
-    long pedidoid FK
-    long productoid FK
-    int cantidad
-    decimal preciounitario
+  PAYMENT {
+    uuid id PK
+    uuid order_id FK
+    string provider
+    string external_id
+    enum status
   }
-  CUPON {
-    long id PK
-    string codigo UK
-    string tipo
-    decimal valor
-    int usosmaximo
-    int usosactuales
-    long creadorid FK
-  }
-  RESENA {
-    long id PK
-    long usuarioid FK
-    long productoid FK
-    int calificacion
-  }
-  FAVORITO {
-    long id PK
-    long usuarioid FK
-    long productoid FK
-  }
-  DIRECCION {
-    long id PK
-    long usuarioid FK
-    boolean principal
-  }
-  PREORDEN {
-    long id PK
-    long usuarioid FK
-    long productoid FK
-    string estado
-  }
-  NOTIFICACION {
-    long id PK
-    long usuarioid FK
-    string tipo
-  }
-  BLOG {
-    long id PK
-    long autorid FK
-    long categoriaid FK
-  }
-  EVENTO {
-    long id PK
-    long usuarioid FK
-  }
-  METRICAVENDEDOR {
-    long id PK
-    long vendedorid FK
-    date fecha
+  COUPON {
+    uuid id PK
+    string code UK
+    enum type
+    decimal discount_value
+    int max_uses
+    int current_uses
   }
 ```
 
-## Núcleo vs. satélites
+## Enums relevantes
+
+| Enum | Valores |
+|---|---|
+| `UserRole` | `COMPRADOR`, `VENDEDOR`, `SUPERADMIN` |
+| `OrderStatus` | `PENDIENTE_PAGO`, `PAGADO`, `PENDIENTE`, `CONFIRMADO`, `ENVIADO`, `ENTREGADO`, `CANCELADO` |
+| `CouponType` | `PORCENTAJE`, `MONTO_FIJO` |
+| `PaymentStatus` | `PENDING`, `SUCCEEDED`, `FAILED`, `CANCELED` |
+| `NotificationType` | `PEDIDO`, `STOCK`, `PROMOCION`, `SISTEMA`, `PAGO` |
+
+## Núcleo vs satélites
 
 ```mermaid
 flowchart TB
   subgraph nucleo [Nucleo comercial]
-    U[USUARIO]
-    P[PRODUCTO]
-    Cat[CATEGORIA]
-    C[CARRITOITEM]
-    Ped[PEDIDO]
-    Pi[PEDIDOITEM]
+    U[users]
+    P[products]
+    Cat[categories]
+    C[cart_items]
+    O[orders]
+    Oi[order_items]
+    Pay[payments]
+    Inv["stock en products"]
   end
 
-  subgraph sat [Satelites]
-    Cup[CUPON]
-    R[RESENA]
-    F[FAVORITO]
-    D[DIRECCION]
-    Pre[PREORDEN]
-    N[NOTIFICACION]
-    B[BLOG]
-    E[EVENTO]
-    M[METRICAVENDEDOR]
+  subgraph sat [Complementos y proyecciones]
+    Cup[coupons]
+    R[reviews]
+    F[favorites]
+    D[addresses]
+    N[notifications]
+    B[blog_posts]
+    E[events]
+    M[seller_metrics]
+    FF[feature_flags]
   end
-
-  U --> C
-  P --> C
-  Cat --> P
-  U --> P
-  U --> Ped
-  Ped --> Pi
-  P --> Pi
-  U --> Cup
-  U --> R
-  P --> R
-  U --> F
-  P --> F
-  U --> D
-  U --> Pre
-  P --> Pre
-  U --> N
-  U --> B
-  Cat --> B
-  U --> E
-  U --> M
 ```
-
-## Fetch y serialización
-
-Casi todas las `@ManyToOne` son `EAGER`. Un GET de carrito arrastra producto, categoría, vendedor (usuario con password). `Cupon.creador` es la excepción (`LAZY` + `@JsonIgnore`).
-
-En la API remodelada: entidades **no** salen por HTTP; el modelo de persistencia puede seguir parecido, el contrato no.
 
 ## Seed
 
-| Script | Intención | Realidad |
-|---|---|---|
-| `data.sql` | Categorías + 3 usuarios | No corre (`init.mode=embedded`) |
-| `data-nuevas-tablas.sql` | Pedido dummy total 0 | Manual |
-| `data-nuevas-3-tablas.sql` | Eventos y blogs | Manual |
-
-Cualquier stack nuevo debe sustituir esto por migraciones versionadas + seed de desarrollo explícito.
+`pnpm --filter api exec prisma db seed` crea usuarios demo, categoría, producto, cupón `WELCOME10` y feature flags activos. Detalle en [07-DESARROLLO.md](07-DESARROLLO.md).
