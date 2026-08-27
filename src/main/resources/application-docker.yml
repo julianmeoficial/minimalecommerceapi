@@ -1,0 +1,11 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:minimalecommerce}?allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USER:app}
+    password: ${MYSQL_PASSWORD:change-me}
+
+app:
+  seed: true

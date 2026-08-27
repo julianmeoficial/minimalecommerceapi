@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:minimalecommerce;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+app:
+  seed: false
+  jwt:
+    secret: test-secret-key-must-be-at-least-32-chars
+    expiration-ms: 3600000
+  upload-dir: ${java.io.tmpdir}/me-uploads

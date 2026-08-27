@@ -1,0 +1,7 @@
+target
+.git
+.idea
+*.iml
+.env
+uploads
+.mvn/wrapper/maven-wrapper.jar.download

@@ -1,6 +1,6 @@
 # Documentación de MinimalEcommerce
 
-> **Histórico.** No hay código ni Spring Boot en `src/`. Solo el árbol de paquetes: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md).
+> **Histórico del prototipo.** La implementación vigente es el monolito modular descrito en [README.md](README.md) y [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md).
 
 Análisis del repositorio `minimalecommerce` (GitHub: `julianmeoficial/minimalecommerce`). Complementa el [README.md](README.md) (estado y arranque) y [REESTRUCTURA.md](REESTRUCTURA.md) (fallas y enfoque futuro).
 
