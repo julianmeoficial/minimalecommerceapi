@@ -1,43 +1,53 @@
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: minimalecommerce-mysql
-    restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
     environment:
-      MYSQL_DATABASE: minimalecommerce
-      MYSQL_USER: app
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-change-me}
+      POSTGRES_DB: minimalecommerce
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: change-me
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root-change-me}"]
+      test: ["CMD-SHELL", "pg_isready -U app -d minimalecommerce"]
       interval: 5s
       timeout: 5s
       retries: 20
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   api:
-    build: .
-    container_name: minimalecommerce-api
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
-      mysql:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: minimalecommerce
-      MYSQL_USER: app
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me}
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgresql://app:change-me@postgres:5432/minimalecommerce?schema=public
       JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-secret-key-32}
-      APP_UPLOAD_DIR: /data/uploads
+      REDIS_URL: redis://redis:6379
+      MEDIA_DRIVER: local
+      UPLOAD_DIR: /data/uploads
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     ports:
       - "8080:8080"
     volumes:
-      - uploads_data:/data/uploads
+      - uploads:/data/uploads
 
 volumes:
-  mysql_data:
-  uploads_data:
+  pgdata:
+  uploads:

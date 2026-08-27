@@ -1,0 +1,29 @@
+{
+  "name": "minimalecommerce-api",
+  "private": true,
+  "packageManager": "pnpm@10.33.3",
+  "scripts": {
+    "dev": "pnpm --filter api start:dev",
+    "build": "pnpm --filter api build",
+    "start": "pnpm --filter api start:prod",
+    "test": "pnpm --filter api test",
+    "test:e2e": "pnpm --filter api test:e2e",
+    "lint": "pnpm --filter api lint",
+    "prisma:generate": "pnpm --filter api prisma:generate",
+    "prisma:migrate": "pnpm --filter api prisma:migrate",
+    "prisma:seed": "pnpm --filter api prisma:seed"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "argon2",
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines",
+      "msgpackr-extract",
+      "protobufjs",
+      "ssh2",
+      "cpu-features",
+      "unrs-resolver"
+    ]
+  }
+}

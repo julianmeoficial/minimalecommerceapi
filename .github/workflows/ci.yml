@@ -8,12 +8,60 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: minimalecommerce
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: change-me
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d minimalecommerce"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://app:change-me@localhost:5432/minimalecommerce?schema=public
+      JWT_SECRET: test-secret-key-must-be-at-least-32-chars
+      REDIS_URL: redis://localhost:6379
+      MEDIA_DRIVER: local
+      UPLOAD_DIR: /tmp/me-uploads
+      CORS_ORIGINS: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: pnpm/action-setup@v4
         with:
-          distribution: temurin
-          java-version: 21
-          cache: maven
-      - name: Tests
-        run: ./mvnw -B test
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --filter api...
+      - name: Prisma generate + migrate
+        working-directory: apps/api
+        run: |
+          pnpm exec prisma generate
+          pnpm exec prisma migrate deploy
+      - name: Unit tests
+        working-directory: apps/api
+        run: pnpm test -- --passWithNoTests
+      - name: E2E marketplace
+        working-directory: apps/api
+        run: pnpm test:e2e -- --testPathPattern=marketplace
+      - name: Build
+        working-directory: apps/api
+        run: pnpm run build
+      - name: Docker image
+        run: docker build -t minimalecommerce-api:ci .

@@ -1,7 +1,6 @@
-target
+node_modules
+dist
 .git
-.idea
-*.iml
 .env
 uploads
-.mvn/wrapper/maven-wrapper.jar.download
+coverage
