@@ -1,35 +1,29 @@
 # MinimalEcommerce API
 
-Backend REST de un marketplace comprador/vendedor. **Este repositorio no incluye frontend**: solo la API, el esquema y el contrato HTTP.
+Backend REST de un marketplace comprador/vendedor. **Sin frontend**: solo la API, el esquema Prisma y el contrato HTTP.
 
-Arquitectura: **monolito modular** (un deploy, varios bounded contexts). Sustituye el CRUD anémico `controller/service/repository` del prototipo Spring Boot original.
+Stack (Notion / Minimal Shop): **NestJS + TypeScript + Prisma + PostgreSQL (Supabase) + Redis/BullMQ**.
+
+Arquitectura: **monolito modular** (un deploy, varios módulos de dominio).
 
 ## Módulos
 
 ```
-identity      registro, login JWT, perfil, direcciones
-catalog       categorías, productos, stock atómico, media
-promotions    cupones usados por el checkout (no un CRUD aislado)
-ordering      carrito, checkout transaccional, pedidos, preórdenes
-engagement    reseñas, favoritos, notificaciones (escuchan OrderPlaced)
-content       blog y eventos (satélite)
-analytics     métricas de vendedor como proyección de OrderPlaced
-shared        errores, JWT, CORS, media store, eventos de dominio
-```
-
-```
-Cliente HTTP  →  /api/v1 + JWT + RBAC
-                    ├─ identity
-                    ├─ catalog
-                    ├─ ordering ──► catalog (stock)
-                    │            └──► promotions (cupón)
-                    ├─ engagement  (OrderPlaced)
-                    └─ analytics   (OrderPlaced)
+identity        registro, login JWT (Argon2), perfil, direcciones, RBAC
+catalog         categorías, productos, caché de lecturas, MediaStore
+inventory       stock atómico (decrementIfAvailable / restore)
+cart            carrito autenticado
+orders          checkout transaccional + OrderPlaced
+payments        puerto PaymentGateway + Stripe (sandbox/mock)
+notifications   consumer BullMQ de eventos de pedido
+reports         métricas de vendedor / plataforma
+complements     cupones, reseñas, favoritos, blog/eventos, feature flags
+shared          config, guards, filtros, logging, throttling, OpenAPI
 ```
 
 ## Contrato
 
-Prefijo **`/api/v1`**. El sujeto del JWT manda: no se acepta `usuarioId` en la URL como autorización.
+Prefijo **`/api/v1`**. El sujeto del JWT manda.
 
 | Recurso | Ruta |
 |---|---|
@@ -39,52 +33,46 @@ Prefijo **`/api/v1`**. El sujeto del JWT manda: no se acepta `usuarioId` en la U
 | Catálogo | `GET /api/v1/products`, `POST` (vendedor) |
 | Carrito / checkout | `/api/v1/cart`, `POST /api/v1/cart/checkout` |
 | Pedidos | `/api/v1/orders`, `/sold` (vendedor) |
+| Pagos | `POST /api/v1/payments/orders/:id/intent`, `/confirm` |
 | Cupones | `/api/v1/coupons` |
 | Reseñas / favoritos / notificaciones | `/api/v1/reviews`, `/favorites`, `/notifications` |
-| Contenido / métricas | `/api/v1/blog`, `/events`, `/metrics` |
-| OpenAPI | `/swagger-ui.html` |
+| Reportes | `/api/v1/reports/seller`, `/platform` |
+| Health | `GET /api/v1/health` |
+| OpenAPI | `/docs` |
 
-Errores: `{ code, message, details, timestamp, path }` con 401/403/404/409. Listados paginados (`content`, `page`, `size`, `totalElements`). Checkout acepta cabecera `Idempotency-Key`.
+Errores: `{ code, message, details, timestamp, path, correlationId }`. Checkout acepta cabecera `Idempotency-Key`.
 
 ## Arranque
 
-Java 21. Secretos por variables de entorno (ver `.env.example`).
+Node 22 + pnpm. Secretos por variables de entorno (ver `.env.example`).
 
 ```bash
 cp .env.example .env
+pnpm install
+pnpm --filter api exec prisma migrate deploy
+pnpm --filter api exec prisma db seed
+pnpm dev
+# o
 docker compose up --build
 ```
 
-API en `http://localhost:8080`. Swagger: `http://localhost:8080/swagger-ui.html`.
+API en `http://localhost:8080`. Swagger: `http://localhost:8080/docs`.
 
-Sin Docker, MySQL 8 local + perfil `dev`:
-
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-Seed de desarrollo (solo `dev`/`docker`):
+Seed de desarrollo:
 
 - `comprador@demo.com` / `demo12345`
 - `vendedor@demo.com` / `demo12345`
+- `admin@demo.com` / `demo12345`
 
 ## Tests
 
 ```bash
-./mvnw test
+pnpm test
+pnpm test:e2e
 ```
 
-Usan H2 (MySQL mode) + Flyway. Cubren checkout con cupón, stock insuficiente, cupón no vigente, JWT y RBAC.
+E2E cubre auth, checkout con cupón, stock insuficiente, cupón inválido y RBAC (requiere Postgres + Redis).
 
-## Qué se corrigió del prototipo
+## Docs
 
-- Un login, contraseñas con BCrypt, JWT, roles `COMPRADOR` / `VENDEDOR`.
-- DTOs: las entidades JPA no salen por HTTP.
-- Flyway en lugar de `ddl-auto=update`.
-- Cupón aplicado en la misma transacción que el pedido.
-- Stock con `UPDATE ... WHERE stock >= :qty`.
-- Imágenes en directorio configurable (`APP_UPLOAD_DIR`), no en `src/`.
-- Métricas y notificaciones reaccionan a `OrderPlaced`; no se actualizan a mano.
-- Sin vistas HTML ni estáticos de frontend.
-
-Documentación de remodelación: [docs/README.md](docs/README.md).
+Guía del núcleo Nest: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md). Documentación Spring histórica en `docs/00–08` (archivada).
