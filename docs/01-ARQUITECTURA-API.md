@@ -1,120 +1,98 @@
-# 01 — Arquitectura actual de la API
+# 01 — Arquitectura de la API
 
-Vista del **prototipo obsoleto**: un proceso Spring Boot, un módulo Maven, Tomcat embebido, MySQL local.
+Monolito modular NestJS: **un deploy**, varios módulos de dominio. Sin microservicios ni frontend en este repositorio.
 
-## Capas
+## Stack
+
+| Área | Tecnología |
+|---|---|
+| Runtime | NestJS 11 + TypeScript (strict) |
+| Paquetes | pnpm workspace (`apps/api`) |
+| BD | PostgreSQL (Supabase o contenedor local) |
+| ORM | Prisma (migraciones versionadas) |
+| Auth | Passport JWT + Argon2 + RBAC |
+| Caché | `@nestjs/cache-manager` (lecturas de catálogo) |
+| Colas | Redis + BullMQ (notificaciones) |
+| Eventos | `@nestjs/event-emitter` (`OrderPlaced`) |
+| Media | Supabase Storage o filesystem local |
+| Pagos | Adaptador propio → Stripe (sandbox / mock) |
+| Ops | Helmet, CORS, throttler, Pino, correlation-id, OpenAPI |
+
+## Vista del proceso
 
 ```mermaid
 flowchart TB
-  Client["Cliente HTTP externo"]
-  Swagger["SpringDoc /swagger-ui"]
+  Client["Cliente HTTP"]
+  Docs["OpenAPI /docs"]
 
-  subgraph process [Proceso Spring Boot :8080]
-    Filter["SecurityFilterChain permitAll CSRF off"]
-    Ctrl["controller 17 clases"]
-    Svc["service 16 clases"]
-    Repo["repository 15 interfaces"]
-    Model["model entidades JPA"]
-    Ex["GlobalExceptionHandler"]
-    Static["ResourceHandler imagenes-productos"]
+  subgraph process ["NestJS :8080"]
+    Guards["Throttler + JWT + Roles"]
+    Modules["Módulos de dominio"]
+    Shared["shared: Prisma, Media, Errors"]
+    Filter["GlobalExceptionFilter"]
   end
 
-  MySQL["MySQL minimalecommerce"]
-  Disk["Filesystem src/.../imagenes-productos"]
+  PG["PostgreSQL"]
+  Redis["Redis / BullMQ"]
+  Storage["MediaStore"]
+  Stripe["Stripe o mock"]
 
-  Client --> Filter
-  Client --> Swagger
-  Swagger --> Ctrl
-  Filter --> Ctrl
-  Ctrl --> Svc
-  Ctrl --> Static
-  Ctrl --> Ex
-  Svc --> Repo
-  Repo --> Model
-  Repo --> MySQL
-  Static --> Disk
-  Ctrl --> Disk
+  Client --> Guards
+  Docs --> Modules
+  Guards --> Modules
+  Modules --> Shared
+  Modules --> Filter
+  Shared --> PG
+  Modules --> Redis
+  Shared --> Storage
+  Modules --> Stripe
 ```
 
-No hay API Gateway, ni capa de DTOs, ni cola, ni caché. El JSON de salida **es** el grafo Hibernate.
-
-## Ciclo de un request típico
+## Ciclo de un request
 
 ```mermaid
 sequenceDiagram
   participant C as Cliente
-  participant S as SecurityFilterChain
+  participant G as JwtAuthGuard / RolesGuard
   participant Ctrl as Controller
   participant Svc as Service
-  participant Repo as JpaRepository
-  participant DB as MySQL
+  participant DB as Prisma / Postgres
 
-  C->>S: HTTP /api/...
-  S->>Ctrl: permitAll
-  Ctrl->>Svc: entidad o Map
-  Svc->>Repo: find/save
-  Repo->>DB: SQL Hibernate
-  DB-->>Repo: filas
-  Repo-->>Svc: entidad EAGER
-  Svc-->>Ctrl: misma entidad
-  alt RuntimeException
-    Ctrl-->>C: 400 JSON timestamp message
+  C->>G: HTTP /api/v1/... + Bearer
+  alt Público (@Public)
+    G->>Ctrl: pasa
+  else Autenticado
+    G->>G: valida JWT / rol
+    G->>Ctrl: AuthUser
+  end
+  Ctrl->>Svc: DTO validado
+  Svc->>DB: query / transacción
+  alt ApiException
+    Svc-->>C: code + status + correlationId
   else OK
-    Ctrl-->>C: 200 entidad o Map
+    Svc-->>C: DTO / página
   end
 ```
 
-## Arranque y configuración
+## Módulos y dependencias
 
 ```mermaid
 flowchart LR
-  Main["MinimalecommerceApplication"]
-  Props["application.properties"]
-  Sec["SecurityConfig"]
-  Web["WebConfig CORS y static"]
-  Oas["SwaggerConfig"]
-  JPA["Hibernate ddl-auto=update"]
-  SQL["data.sql NO corre en MySQL"]
-
-  Main --> Props
-  Main --> Sec
-  Main --> Web
-  Main --> Oas
-  Props --> JPA
-  Props --> SQL
+  identity --> shared
+  catalog --> inventory
+  catalog --> shared
+  cart --> inventory
+  cart --> orders
+  orders --> inventory
+  orders --> complements
+  orders -->|"OrderPlaced"| notifications
+  orders -->|"OrderPlaced"| reports
+  payments --> shared
+  complements --> shared
 ```
 
-Puntos de fricción:
+- **Núcleo comercial:** identity, catalog, inventory, cart, orders, payments.
+- **Async / proyección:** notifications, reports.
+- **Complementos (feature flags):** cupones, reseñas, favoritos, blog, eventos.
 
-- CORS duplicado (`WebConfig` vs `spring.web.cors.*`).
-- `spring.sql.init.mode=embedded` deja el seed inerte.
-- OpenAPI 2.1.0 sobre Boot 3.5.0 (combinación desactualizada).
-- Vistas HTML configuradas (`spring.mvc.view.prefix`) sin archivos.
-
-## Paquetes Java actuales vs. destino
-
-```mermaid
-flowchart LR
-  subgraph hoy [Hoy plano]
-    C1["controller"]
-    S1["service"]
-    R1["repository"]
-    M1["model"]
-  end
-
-  subgraph destino [Destino sugerido]
-    Id["identity"]
-    Cat["catalog"]
-    Ord["ordering"]
-    Pro["promotions"]
-    Eng["engagement"]
-    Cnt["content"]
-  end
-
-  C1 -.->|remodelar| destino
-  S1 -.-> destino
-  R1 -.-> destino
-  M1 -.-> destino
-```
-
-El destino (módulos) se detalla en [06-CAMBIO-DE-ENFOQUE.md](06-CAMBIO-DE-ENFOQUE.md). No es obligatorio si se cambia de stack; el **contrato** sí: [05-CONTRATO-API.md](05-CONTRATO-API.md).
+Detalle de carpetas: [06-ESTRUCTURA.md](06-ESTRUCTURA.md).

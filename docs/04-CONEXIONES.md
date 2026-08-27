@@ -1,95 +1,82 @@
-# 04 — Conexiones del sistema actual
+# 04 — Conexiones
 
-Cómo se conectan cliente, API, base de datos y archivos en el prototipo.
+Cómo se conectan cliente, API, base de datos, colas y servicios externos.
 
-## Mapa de despliegue local
+## Despliegue local (Docker Compose)
 
 ```mermaid
 flowchart TB
-  subgraph host [Maquina de desarrollo]
-    Browser["Navegador / HTTP client"]
-    FE["Frontend esperado :3000 NO esta en el repo"]
-    JVM["JVM Spring Boot :8080"]
-    MySQL["MySQL :3306"]
-    SrcFiles["src/main/resources/static/imagenes-productos"]
+  subgraph host [Host]
+    Client["HTTP client / Swagger"]
   end
 
-  Browser -->|"REST JSON"| JVM
-  FE -.->|"CORS localhost:3000"| JVM
-  Browser -->|"Swagger UI"| JVM
-  JVM -->|"JDBC"| MySQL
-  JVM -->|"GET classpath"| SrcFiles
-  JVM -->|"POST Multipart write"| SrcFiles
+  subgraph compose [docker-compose]
+    API["api :8080"]
+    PG["postgres :5432"]
+    Redis["redis :6379"]
+    Vol["uploads volume"]
+  end
+
+  Client -->|"/api/v1 y /docs"| API
+  API -->|"DATABASE_URL"| PG
+  API -->|"REDIS_URL"| Redis
+  API -->|"MEDIA_DRIVER=local"| Vol
 ```
 
-No hay reverse proxy, TLS, ni red Docker. Un `docker-compose` no existe.
+Servicios definidos en [`docker-compose.yml`](../docker-compose.yml). Healthchecks en Postgres y Redis antes de levantar la API.
 
-## CORS y orígenes
+## Sin Docker
 
 ```mermaid
 flowchart LR
-  Props["application.properties allowed-origins localhost:8080"]
-  Web["WebConfig allowedOriginPatterns localhost:* 127.0.0.1:* :3000"]
-  Ctrl["@CrossOrigin en algunos controllers :3000"]
-  Req["Request /api/**"]
-
-  Req --> Web
-  Req --> Ctrl
-  Props -.->|no manda en /api| Web
+  Nest["pnpm dev :8080"] --> PG["Postgres local o Supabase"]
+  Nest --> Redis["Redis local :6379"]
+  Nest --> Uploads["UPLOAD_DIR ./uploads"]
 ```
 
-En la remodelación: **un** sitio de CORS, lista de orígenes por perfil.
-
-## Superficie de red de la API
+## Superficie de red
 
 ```mermaid
 flowchart TB
-  In["Entrada TCP 8080"]
-  In --> Api["/api/** REST"]
-  In --> Docs["/swagger-ui/** y /v3/api-docs"]
-  In --> Img["/imagenes-productos/**"]
-  In --> Other["cualquier otra ruta permitAll"]
+  In["TCP PORT (default 8080)"]
+  In --> Api["/api/v1/** REST"]
+  In --> Docs["/docs OpenAPI"]
+  In --> Health["/api/v1/health"]
 
   Api --> JSON["application/json"]
-  Api --> MP["multipart imagenes"]
+  Api --> MP["multipart product images"]
 ```
 
-Todo es público. No hay rate limit ni API key.
+Protecciones activas: Helmet, CORS (`CORS_ORIGINS`), `@nestjs/throttler`, JWT global (excepto `@Public()`).
 
-## Dependencias de runtime
+## Integraciones opcionales
 
-```mermaid
-flowchart TB
-  Boot["spring-boot-starter-web Tomcat"]
-  JPA["spring-boot-starter-data-jpa"]
-  Sec["spring-boot-starter-security"]
-  Val["spring-boot-starter-validation"]
-  My["mysql-connector-j"]
-  Oas["springdoc-openapi 2.1.0"]
-  L["lombok compile"]
-  Dev["devtools"]
-
-  Boot --> App["MinimalecommerceApplication"]
-  JPA --> App
-  Sec --> App
-  Val --> App
-  My --> JPA
-  Oas --> Boot
-  L --> App
-  Dev --> App
-```
-
-Ausentes: Redis, broker, cliente HTTP de pagos, S3 SDK, Flyway, JWT library (jjwt/nimbus).
-
-## Confianza (modelo de amenaza actual)
+| Variable | Uso |
+|---|---|
+| `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Storage cuando `MEDIA_DRIVER=supabase` |
+| `SUPABASE_STORAGE_BUCKET` | Bucket de imágenes (default `product-images`) |
+| `STRIPE_SECRET_KEY` | PaymentIntents reales; si vacío → mock |
+| `STRIPE_WEBHOOK_SECRET` | Reservado para webhooks (sandbox) |
+| `REDIS_URL` | BullMQ (notificaciones) |
 
 ```mermaid
 flowchart LR
-  Anyone["Cualquier cliente en la red"]
-  Anyone --> AllApi["Todos los endpoints"]
-  AllApi --> DB["Lectura y escritura MySQL"]
-  AllApi --> Files["Escritura de archivos"]
-  AllApi --> Roles["Cambio de tipousuario"]
+  Catalog --> Media["MediaStore"]
+  Media -->|local| FS["UPLOAD_DIR"]
+  Media -->|supabase| SB["Supabase Storage"]
+  Payments --> GW["PaymentGateway"]
+  GW -->|key presente| Stripe
+  GW -->|sin key| Mock
+  Notifications --> BullMQ --> Redis
 ```
 
-Eso es inaceptable fuera de localhost. Cualquier stack o enfoque nuevo debe invertir este diagrama: el cliente **no** elige el `usuarioId`; lo emite el servidor tras autenticar.
+## Confianza
+
+```mermaid
+flowchart LR
+  Client["Cliente"] -->|"Bearer JWT"| API
+  API -->|"sub = userId"| AuthZ["RBAC + ownership"]
+  AuthZ --> DB["Postgres"]
+```
+
+El cliente **no** elige el `usuarioId` en la URL para autorizar: lo emite el servidor tras autenticar. Vendedor solo muta sus productos; comprador solo su carrito/pedidos.

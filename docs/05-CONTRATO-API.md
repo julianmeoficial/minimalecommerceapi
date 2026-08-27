@@ -1,90 +1,101 @@
-# 05 — Contrato HTTP actual (superficie de la API)
+# 05 — Contrato HTTP
 
-Este es el **producto** que hay que remodelar: una API REST bajo `/api`. El frontend no está; quien consuma esto (ahora o después de un cambio de stack) necesita este mapa.
-
-Convenciones rotas hoy: entidades JPA como body, `Map<String,Object>`, login duplicado, sin `/v1`, sin paginación, sin auth.
+Prefijo: **`/api/v1`**. OpenAPI vivo: [`/docs`](http://localhost:8080/docs).
+Sujeto = claim `sub` del JWT. Respuestas y bodies son DTOs (nunca modelos Prisma).
 
 ## Agrupación por capacidad
 
 ```mermaid
 flowchart TB
   subgraph identity [Identidad]
-    A["/api/auth"]
-    U["/api/usuarios"]
-    D["/api/direcciones"]
+    A["/auth"]
+    Me["/me"]
   end
 
   subgraph catalog [Catalogo]
-    P["/api/productos"]
-    Cat["/api/categorias"]
-    I["/api/imagenes"]
+    P["/products"]
+    Cat["/categories"]
+    Media["/media/:filename"]
   end
 
-  subgraph ordering [Pedidos]
-    Cart["/api/carrito"]
-    Ped["/api/pedidos"]
-    Pi["/api/pedidoitems"]
-    Pre["/api/preordenes"]
+  subgraph ordering [Comercio]
+    Cart["/cart"]
+    Ord["/orders"]
+    Pay["/payments"]
   end
 
-  subgraph promo [Promocion]
-    Cup["/api/cupones"]
+  subgraph complements [Complementos]
+    Cup["/coupons"]
+    Rev["/reviews"]
+    Fav["/favorites"]
+    Blog["/blog/posts"]
+    Ev["/events"]
+    FF["/feature-flags"]
   end
 
-  subgraph engage [Engagement]
-    R["/api/resenas"]
-    F["/api/favoritos"]
-    N["/api/notificaciones"]
-  end
-
-  subgraph extra [Contenido y analytics]
-    B["/api/blogs"]
-    E["/api/eventos"]
-    M["/api/metricas-vendedor"]
+  subgraph other [Ops]
+    N["/notifications"]
+    R["/reports"]
+    H["/health"]
   end
 ```
 
-## Qué preservar semánticamente
+## Endpoints principales
 
-| Capacidad | Endpoints clave | Al remodelar |
-|---|---|---|
-| Registro | `POST /api/usuarios/registro`, `/registro/vendedor` | Un registro; rol en claim o tabla; password hash |
-| Login | dos rutas | **Una** + JWT |
-| Catálogo | `GET /api/productos`, filtros, por vendedor | DTOs + `Pageable` |
-| Carrito | `/agregar`, cantidad, limpiar | Sujeto = token |
-| Checkout | `POST /api/carrito/procesar-pedido` | Cupón real, idempotencia, stock atómico |
-| Pedidos | por usuario / vendedor / estado | Autorización por rol |
-| Cupones | CRUD + validar + aplicar | Aplicar **dentro** del checkout |
-| Reseñas / favoritos / direcciones | CRUD existente | DTOs, ownership |
-| Media | `/api/imagenes` | Object storage; URL pública |
+| Método | Ruta | Auth | Notas |
+|---|---|---|---|
+| `POST` | `/auth/register` | público | Roles `COMPRADOR` \| `VENDEDOR` |
+| `POST` | `/auth/login` | público | Devuelve Bearer JWT |
+| `GET/PUT` | `/me` | JWT | Perfil |
+| `GET/POST/DELETE` | `/me/addresses` | JWT | Direcciones |
+| `GET` | `/categories`, `/products` | público | Productos paginados |
+| `POST/PUT/DELETE` | `/products` | VENDEDOR+ | Mutación + invalidación de caché |
+| `POST` | `/products/:id/image` | VENDEDOR | multipart `file` |
+| `GET/POST/PUT/DELETE` | `/cart`, `/cart/items` | JWT | Carrito del sujeto |
+| `POST` | `/cart/checkout` | JWT | Header opcional `Idempotency-Key` |
+| `GET` | `/orders`, `/orders/sold`, `/orders/:id` | JWT | Buyer / seller |
+| `PUT` | `/orders/:id/status` | VENDEDOR | Cumplimiento |
+| `POST` | `/orders/:id/cancel` | comprador | Restaura stock |
+| `POST` | `/payments/orders/:id/intent` | JWT | Crea PaymentIntent |
+| `POST` | `/payments/orders/:id/confirm` | JWT | Marca `PAGADO` |
+| `POST/GET` | `/coupons` | VENDEDOR+ / público | Crear / consultar código |
+| `POST/GET` | `/reviews` | COMPRADOR / público | Feature flag `reviews` |
+| `GET/POST/DELETE` | `/favorites` | COMPRADOR | Feature flag `favorites` |
+| `GET/POST` | `/blog/posts`, `/events` | mixto | Feature flags |
+| `GET/PUT` | `/feature-flags` | SUPERADMIN | Activar módulos |
+| `GET` | `/notifications` | JWT | Lista del usuario |
+| `GET` | `/reports/seller`, `/platform` | VENDEDOR / SUPERADMIN | Métricas |
+| `GET` | `/health` | público | `SELECT 1` |
 
-Lista exhaustiva de métodos: [DOCUMENTACION.md](../DOCUMENTACION.md) sección 7.
+## Errores
 
-## Qué no preservar como contrato
-
-```mermaid
-flowchart TB
-  Bad1["GET /api/usuarios lista con password"]
-  Bad2["usuarioId en path como auth"]
-  Bad3["PUT /api/usuarios/id/tipo sin admin"]
-  Bad4["DELETE /eliminar-completo sin auth"]
-  Bad5["GET /mantenimiento/desactivar-vencidos publico"]
-  Bad6["Respuestas Map ad hoc"]
-
-  Bad1 --> V1["/api/v1 recursos + DTOs"]
-  Bad2 --> V1
-  Bad3 --> V1
-  Bad4 --> V1
-  Bad5 --> V1
-  Bad6 --> V1
+```json
+{
+  "code": "STOCK_INSUFFICIENT",
+  "message": "No hay stock suficiente",
+  "details": [],
+  "timestamp": "2026-08-27T01:00:00.000Z",
+  "path": "/api/v1/cart/checkout",
+  "correlationId": "…"
+}
 ```
 
-## Forma objetivo del contrato (independiente del stack)
+Status habituales: `400` validación / regla de negocio, `401` sin token, `403` rol, `404` recurso, `409` conflicto (stock, cupón, email).
 
-- Prefijo `/api/v1`.
-- Recursos en plural, IDs opacos o UUID.
-- Errores: `{ code, message, details }` y status correctos (404/409/401/403).
-- OpenAPI generado y publicado; SpringDoc o equivalente en otro runtime.
-- Compatibilidad: el prototipo `/api/**` se puede dejar un tiempo como *legacy* y apagar cuando el cliente nuevo exista.
+## Paginación
 
-Si se cambia de stack, **este archivo + OpenAPI nuevo** son el brief de migración, no las clases Java.
+Listados de productos y pedidos:
+
+```json
+{
+  "content": [],
+  "page": 0,
+  "size": 20,
+  "totalElements": 0,
+  "totalPages": 0
+}
+```
+
+## Idempotencia
+
+`POST /cart/checkout` acepta `Idempotency-Key`. Misma clave + mismo comprador → mismo pedido (unique `(buyer_id, idempotency_key)`).

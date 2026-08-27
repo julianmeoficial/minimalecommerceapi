@@ -1,50 +1,10 @@
 # MinimalEcommerce API
 
-Backend REST de un marketplace comprador/vendedor. **Sin frontend**: solo la API, el esquema Prisma y el contrato HTTP.
+Backend REST de un marketplace (comprador / vendedor / superadmin). **Sin frontend**: solo la API, el esquema y el contrato HTTP.
 
-Stack (Notion / Minimal Shop): **NestJS + TypeScript + Prisma + PostgreSQL (Supabase) + Redis/BullMQ**.
+**Stack:** NestJS · TypeScript · Prisma · PostgreSQL (Supabase) · Redis / BullMQ · JWT + Argon2 · Stripe (sandbox)
 
-Arquitectura: **monolito modular** (un deploy, varios módulos de dominio).
-
-## Módulos
-
-```
-identity        registro, login JWT (Argon2), perfil, direcciones, RBAC
-catalog         categorías, productos, caché de lecturas, MediaStore
-inventory       stock atómico (decrementIfAvailable / restore)
-cart            carrito autenticado
-orders          checkout transaccional + OrderPlaced
-payments        puerto PaymentGateway + Stripe (sandbox/mock)
-notifications   consumer BullMQ de eventos de pedido
-reports         métricas de vendedor / plataforma
-complements     cupones, reseñas, favoritos, blog/eventos, feature flags
-shared          config, guards, filtros, logging, throttling, OpenAPI
-```
-
-## Contrato
-
-Prefijo **`/api/v1`**. El sujeto del JWT manda.
-
-| Recurso | Ruta |
-|---|---|
-| Auth | `POST /api/v1/auth/register`, `/login` |
-| Perfil | `GET/PUT /api/v1/me` |
-| Direcciones | `/api/v1/me/addresses` |
-| Catálogo | `GET /api/v1/products`, `POST` (vendedor) |
-| Carrito / checkout | `/api/v1/cart`, `POST /api/v1/cart/checkout` |
-| Pedidos | `/api/v1/orders`, `/sold` (vendedor) |
-| Pagos | `POST /api/v1/payments/orders/:id/intent`, `/confirm` |
-| Cupones | `/api/v1/coupons` |
-| Reseñas / favoritos / notificaciones | `/api/v1/reviews`, `/favorites`, `/notifications` |
-| Reportes | `/api/v1/reports/seller`, `/platform` |
-| Health | `GET /api/v1/health` |
-| OpenAPI | `/docs` |
-
-Errores: `{ code, message, details, timestamp, path, correlationId }`. Checkout acepta cabecera `Idempotency-Key`.
-
-## Arranque
-
-Node 22 + pnpm. Secretos por variables de entorno (ver `.env.example`).
+## Inicio rápido
 
 ```bash
 cp .env.example .env
@@ -52,17 +12,61 @@ pnpm install
 pnpm --filter api exec prisma migrate deploy
 pnpm --filter api exec prisma db seed
 pnpm dev
-# o
+```
+
+| Recurso | URL |
+|---|---|
+| API | http://localhost:8080/api/v1 |
+| OpenAPI | http://localhost:8080/docs |
+| Health | http://localhost:8080/api/v1/health |
+
+Con Docker (API + Postgres + Redis):
+
+```bash
 docker compose up --build
 ```
 
-API en `http://localhost:8080`. Swagger: `http://localhost:8080/docs`.
+## Módulos
 
-Seed de desarrollo:
+| Módulo | Responsabilidad |
+|---|---|
+| `identity` | Registro, login JWT, perfil, direcciones, RBAC |
+| `catalog` | Categorías, productos, caché de lecturas, media |
+| `inventory` | Stock atómico (`decrementIfAvailable` / `restore`) |
+| `cart` | Carrito autenticado |
+| `orders` | Checkout transaccional + evento `OrderPlaced` |
+| `payments` | Puerto `PaymentGateway` + Stripe (o mock local) |
+| `notifications` | Consumer BullMQ de pedidos |
+| `reports` | Métricas de vendedor / plataforma |
+| `complements` | Cupones, reseñas, favoritos, blog, eventos, feature flags |
+| `shared` | Prisma, guards, filtros, logging, throttling, OpenAPI |
 
-- `comprador@demo.com` / `demo12345`
-- `vendedor@demo.com` / `demo12345`
-- `admin@demo.com` / `demo12345`
+## Contrato
+
+Prefijo **`/api/v1`**. El sujeto viene del JWT (no se acepta `usuarioId` en la URL como autorización).
+
+| Área | Rutas principales |
+|---|---|
+| Auth | `POST /auth/register`, `POST /auth/login` |
+| Perfil | `GET/PUT /me`, `/me/addresses` |
+| Catálogo | `GET /products`, `POST /products` (vendedor) |
+| Carrito | `GET/POST /cart`, `POST /cart/checkout` |
+| Pedidos | `GET /orders`, `GET /orders/sold` |
+| Pagos | `POST /payments/orders/:id/intent`, `/confirm` |
+| Cupones / engagement | `/coupons`, `/reviews`, `/favorites`, `/notifications` |
+| Reportes | `/reports/seller`, `/reports/platform` |
+
+Errores: `{ code, message, details, timestamp, path, correlationId }`. Checkout acepta cabecera `Idempotency-Key`.
+
+## Seed de desarrollo
+
+| Email | Password | Rol |
+|---|---|---|
+| `comprador@demo.com` | `demo12345` | COMPRADOR |
+| `vendedor@demo.com` | `demo12345` | VENDEDOR |
+| `admin@demo.com` | `demo12345` | SUPERADMIN |
+
+Cupón demo: `WELCOME10` (10 %).
 
 ## Tests
 
@@ -71,8 +75,17 @@ pnpm test
 pnpm test:e2e
 ```
 
-E2E cubre auth, checkout con cupón, stock insuficiente, cupón inválido y RBAC (requiere Postgres + Redis).
+Los e2e cubren auth, checkout con cupón, stock insuficiente, cupón inválido, RBAC y pagos (requieren Postgres + Redis).
 
-## Docs
+## Documentación
 
-Guía del núcleo Nest: [docs/09-NUCLEO-GUIA.md](docs/09-NUCLEO-GUIA.md). Documentación Spring histórica en `docs/00–08` (archivada).
+- [docs/README.md](docs/README.md) — índice
+- [CHANGELOG.md](CHANGELOG.md) — historial de cambios
+- [CONTRIBUTING.md](CONTRIBUTING.md) — cómo contribuir
+
+## Requisitos
+
+- Node.js 22+
+- pnpm 10+
+- PostgreSQL 16 (local, Docker o Supabase)
+- Redis 7 (notificaciones / colas)
