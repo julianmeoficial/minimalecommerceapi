@@ -13,9 +13,15 @@ export class LocalMediaStore implements MediaStore {
     this.root = path.resolve(config.get<string>('UPLOAD_DIR') || './uploads');
   }
 
-  async store(buffer: Buffer, filename: string, _contentType: string): Promise<string> {
+  async store(buffer: Buffer, _filename: string, contentType: string): Promise<string> {
     await fs.mkdir(this.root, { recursive: true });
-    const ext = path.extname(filename) || '.bin';
+    const extMap: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+      'image/gif': '.gif',
+    };
+    const ext = extMap[contentType] ?? '.bin';
     const name = `${randomUUID()}${ext}`;
     await fs.writeFile(path.join(this.root, name), buffer);
     return `/api/v1/media/${name}`;

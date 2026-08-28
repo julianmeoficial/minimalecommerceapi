@@ -7,7 +7,10 @@ export class RegisterDto {
   @ApiProperty() @IsEmail() email!: string;
   @ApiProperty() @IsString() @MinLength(8) @MaxLength(72) password!: string;
   @ApiPropertyOptional() @IsOptional() @IsString() phone?: string;
-  @ApiProperty({ enum: UserRole }) @IsEnum(UserRole) role!: UserRole;
+  @ApiPropertyOptional({ enum: UserRole })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }
 
 export class LoginDto {

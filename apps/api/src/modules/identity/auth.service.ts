@@ -33,7 +33,7 @@ export class AuthService {
         email: dto.email.toLowerCase(),
         passwordHash: await argon2.hash(dto.password),
         phone: dto.phone,
-        role: dto.role,
+        role: dto.role ?? UserRole.COMPRADOR,
       },
     });
     return { token: this.tokenFor(user), tokenType: 'Bearer', user: this.toUser(user) };

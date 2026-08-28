@@ -149,7 +149,9 @@ export class CatalogService {
     this.requireSeller(user);
     const existing = await this.prisma.product.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError('producto', id);
-    if (existing.sellerId !== user.userId) throw new ForbiddenError();
+    if (existing.sellerId !== user.userId && user.role !== 'SUPERADMIN') {
+      throw new ForbiddenError();
+    }
     if (existing.imageUrl) await this.media.delete(existing.imageUrl);
     const url = await this.media.store(file.buffer, file.originalname, file.mimetype);
     const p = await this.prisma.product.update({
@@ -165,7 +167,9 @@ export class CatalogService {
     this.requireSeller(user);
     const existing = await this.prisma.product.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError('producto', id);
-    if (existing.sellerId !== user.userId) throw new ForbiddenError();
+    if (existing.sellerId !== user.userId && user.role !== 'SUPERADMIN') {
+      throw new ForbiddenError();
+    }
     await this.prisma.product.update({ where: { id }, data: { active: false } });
     await this.invalidateCatalogCache();
   }

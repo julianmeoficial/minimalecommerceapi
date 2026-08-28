@@ -39,6 +39,8 @@ export class OrdersController {
   }
 
   @Put(':id/status')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.VENDEDOR, UserRole.SUPERADMIN)
   status(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateStatusDto) {
     return this.orders.updateStatus(user, id, dto.status);
   }

@@ -7,6 +7,7 @@ import {
   PaymentGateway,
   PaymentIntentResult,
 } from './payment-gateway';
+import { ApiException } from '../../shared/errors/api-error';
 
 @Injectable()
 export class StripePaymentGateway implements PaymentGateway {
@@ -17,8 +18,19 @@ export class StripePaymentGateway implements PaymentGateway {
     this.stripe = key ? new Stripe(key) : null;
   }
 
+  private assertMockAllowed() {
+    if (this.config.get<string>('NODE_ENV') === 'production') {
+      throw new ApiException(
+        'PAYMENTS_UNAVAILABLE',
+        'Los pagos no están configurados',
+        503,
+      );
+    }
+  }
+
   async createPaymentIntent(input: CreatePaymentIntentInput): Promise<PaymentIntentResult> {
     if (!this.stripe) {
+      this.assertMockAllowed();
       // Sandbox local sin Stripe: simula intent pendiente
       return {
         provider: 'stripe-mock',
@@ -45,6 +57,7 @@ export class StripePaymentGateway implements PaymentGateway {
 
   async confirmPayment(externalId: string): Promise<PaymentIntentResult> {
     if (!this.stripe) {
+      this.assertMockAllowed();
       return {
         provider: 'stripe-mock',
         externalId,
