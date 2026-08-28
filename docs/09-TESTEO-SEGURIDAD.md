@@ -28,7 +28,7 @@ En CI (`.github/workflows/ci.yml`) corren ambos e2e además de unitarios y build
 El registro público como `VENDEDOR` es **decisión de producto** del marketplace (auto-alta de
 vendedores). Lo que sí se bloquea es auto-registrarse como `SUPERADMIN`.
 
-## Cómo se testeó
+## ¿Cómo se testeó?
 
 1. Revisión del código (guards globales, DTOs, Prisma, Helmet, Stripe).
 2. Tests e2e en `apps/api/test/security.e2e-spec.ts`: peticiones HTTP que **deben fallar**
@@ -37,7 +37,7 @@ vendedores). Lo que sí se bloquea es auto-registrarse como `SUPERADMIN`.
 
 Mapeo informal a [OWASP API Security](https://owasp.org/API-Security/):
 
-| Tema | Qué comprobamos | Resultado |
+| Tema | ¿Qué comprobamos? | Resultado |
 |---|---|---|
 | Broken Object Level Authorization | Pedido y dirección de otro usuario | 403 / 404 — OK |
 | Broken Authentication | JWT vacío/malformado; `JWT_SECRET` corto o placeholder | 401; arranque falla si el secreto es inválido |
@@ -66,7 +66,7 @@ Mapeo informal a [OWASP API Security](https://owasp.org/API-Security/):
 
 ### Aceptados (riesgo consciente)
 
-| Tema | Por qué se deja |
+| Tema | ¿Por qué se deja? |
 |---|---|
 | Auto-registro `VENDEDOR` | El marketplace permite vendedores self-service; el e2e y el seed lo usan |
 | RLS con `USING (true)` | Prisma conecta como owner; RLS es barrera extra para clientes con anon key, no para este backend |
