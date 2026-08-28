@@ -82,9 +82,11 @@ docs: actualiza contrato de pagos
 
 ```bash
 pnpm test                 # unitarios
-pnpm test:e2e             # marketplace flow (Postgres + Redis)
+pnpm test:e2e             # marketplace + security (Postgres + Redis)
 pnpm --filter api build   # compilación
 ```
+
+El e2e de seguridad (`security.e2e-spec.ts`) comprueba 401/403/IDOR/validación; ver `docs/09-TESTEO-SEGURIDAD.md`.
 
 No envíes un PR que rompa el flujo e2e de checkout.
 

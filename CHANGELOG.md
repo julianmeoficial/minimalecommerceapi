@@ -12,6 +12,8 @@ y el versionado [SemVer](https://semver.org/lang/es/).
   errores frecuentes y comprobación de salud de la API.
 - TLS local para desarrollo: `pnpm certs:dev` genera certificados en `apps/api/certs/` y la API
   arranca en HTTPS si existen (Swagger en Safari).
+- Guía de testeo de seguridad (`docs/09-TESTEO-SEGURIDAD.md`) y e2e defensivos
+  (`apps/api/test/security.e2e-spec.ts`).
 
 ### Changed
 
@@ -34,6 +36,10 @@ y el versionado [SemVer](https://semver.org/lang/es/).
     puede elegir “visitar el sitio web” para abrir Swagger).
   - **Solución:** `upgradeInsecureRequests: null` en desarrollo + `pnpm certs:dev` →
     `https://localhost:8080/docs`. Detalle en `docs/07-DESARROLLO.md`.
+- Endurecimiento de seguridad (rama de auditoría):
+  - JWT sin fallback `dev-secret`; mock de Stripe prohibido en production; upload de imágenes
+    con MIME allow-list y 5 MB; Swagger off en production; throttle en login/register;
+  `@Roles` en mutaciones de catálogo y cambio de estado de pedido.
 
 ## [1.0.0] - 2026-08-27
 
