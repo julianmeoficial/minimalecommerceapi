@@ -59,7 +59,10 @@ jobs:
         run: pnpm test -- --passWithNoTests
       - name: E2E marketplace
         working-directory: apps/api
-        run: pnpm test:e2e -- --testPathPattern=marketplace
+        run: pnpm exec jest --config ./test/jest-e2e.json --testPathPatterns=marketplace
+      - name: E2E security
+        working-directory: apps/api
+        run: pnpm exec jest --config ./test/jest-e2e.json --testPathPatterns=security
       - name: Build
         working-directory: apps/api
         run: pnpm run build
