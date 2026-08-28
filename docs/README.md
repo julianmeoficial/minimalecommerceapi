@@ -13,6 +13,7 @@ Documentación operativa del backend actual (NestJS). Empieza por el [README de 
 | [05 — Contrato HTTP](05-CONTRATO-API.md) | Superficie `/api/v1`, errores, paginación |
 | [06 — Estructura del repo](06-ESTRUCTURA.md) | Árbol de archivos y módulos |
 | [07 — Desarrollo](07-DESARROLLO.md) | Scripts, seed, tests, variables de entorno |
+| [08 — Supabase](08-SUPABASE.md) | Conectar Postgres/Storage de Supabase |
 
 También: [CHANGELOG](../CHANGELOG.md) · [CONTRIBUTING](../CONTRIBUTING.md)
 

@@ -8,7 +8,9 @@ Backend REST de un marketplace (comprador / vendedor / superadmin). **Sin fronte
 
 ```bash
 cp .env.example .env
+cp .env apps/api/.env
 pnpm install
+pnpm certs:dev
 pnpm --filter api exec prisma migrate deploy
 pnpm --filter api exec prisma db seed
 pnpm dev
@@ -16,9 +18,12 @@ pnpm dev
 
 | Recurso | URL |
 |---|---|
-| API | http://localhost:8080/api/v1 |
-| OpenAPI | http://localhost:8080/docs |
-| Health | http://localhost:8080/api/v1/health |
+| API | https://localhost:8080/api/v1 (con `pnpm certs:dev`) |
+| OpenAPI | https://localhost:8080/docs |
+| Health | https://localhost:8080/api/v1/health |
+
+**Safari:** puede mostrar un aviso por el certificado local autofirmado; es normal (privacidad
+estricta). En desarrollo puedes continuar al sitio — ver [docs/07-DESARROLLO.md](docs/07-DESARROLLO.md#tls-local-y-safari).
 
 Con Docker (API + Postgres + Redis):
 
@@ -80,6 +85,7 @@ Los e2e cubren auth, checkout con cupón, stock insuficiente, cupón inválido, 
 ## Documentación
 
 - [docs/README.md](docs/README.md) — índice
+- [docs/08-SUPABASE.md](docs/08-SUPABASE.md) — conectar Postgres/Storage en Supabase
 - [CHANGELOG.md](CHANGELOG.md) — historial de cambios
 - [CONTRIBUTING.md](CONTRIBUTING.md) — cómo contribuir
 

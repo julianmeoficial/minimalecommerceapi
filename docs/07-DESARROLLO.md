@@ -45,6 +45,60 @@ pnpm --filter api exec prisma db seed
 Usuarios demo: `comprador@demo.com`, `vendedor@demo.com`, `admin@demo.com` / `demo12345`.
 Cupón: `WELCOME10`.
 
+## OpenAPI (Swagger)
+
+| Recurso | URL |
+|---|---|
+| UI | https://localhost:8080/docs |
+| Spec JSON | https://localhost:8080/docs-json |
+
+La UI vive en la raíz (`/docs`), no bajo `/api/v1`.
+
+### TLS local y Safari
+
+```bash
+pnpm certs:dev   # genera apps/api/certs/*.pem (gitignored)
+pnpm dev         # detecta certificados → HTTPS en :8080
+```
+
+#### ¿Por qué Safari se comporta distinto?
+
+Safari prioriza la **privacidad y la seguridad del usuario** de forma más estricta que muchos
+navegadores basados en Chromium. En desarrollo local eso se nota de dos maneras:
+
+1. **Página en blanco con HTTP** — si Helmet envía `upgrade-insecure-requests`, Safari intenta cargar
+   los assets de Swagger por HTTPS aunque el servidor solo escuche HTTP.
+2. **Aviso al usar HTTPS local** — con `pnpm certs:dev` la API usa un certificado **autofirmado**
+   (válido solo en tu máquina). Safari no lo reconoce como emitido por una autoridad de confianza y
+   muestra una pantalla de advertencia antes de dejarte entrar.
+
+Ese aviso **es esperado y, en general, es bueno**: protege ante sitios que fingen ser seguros. En
+localhost el riesgo real es mínimo porque el tráfico no sale de tu equipo; aun así, Safari te pide
+confirmación explícita. Puede resultar molesto cuando solo quieres ver Swagger, pero refleja el
+enfoque de Apple en no asumir que “local” implica “seguro de confiar”.
+
+#### Cómo abrir Swagger en Safari
+
+1. Arranca la API con certificados (`pnpm certs:dev` + `pnpm dev`).
+2. Abre **https://localhost:8080/docs** (con `https://`).
+3. En la pantalla de advertencia: **Mostrar detalles** → **visitar este sitio web** (o equivalente
+   según tu versión de macOS). Siempre puedes **aceptar el riesgo e ir igual**; es tu entorno local.
+4. Opcional: vacía caché (**Develop → Empty Caches**) si antes probaste la URL en HTTP.
+
+Para evitar el aviso en cada máquina puedes usar [mkcert](https://github.com/FiloSottile/mkcert)
+(`mkcert -install` + regenerar los `.pem`); no es obligatorio para desarrollo.
+
+#### Safari en blanco (HTTP sin TLS)
+
+**Síntoma:** Chromium carga Swagger; Safari muestra página vacía en `http://localhost:8080/docs`.
+
+**Causa:** Helmet CSP con `upgrade-insecure-requests` (Safari fuerza HTTPS en assets).
+
+**Solución:** `pnpm certs:dev` + **https://** … o, en desarrollo, Helmet desactiva esa directiva
+(`upgradeInsecureRequests: null` — borrar solo la clave kebab no basta con Helmet 8).
+
+Tras cambios, reinicia `pnpm dev` y vacía caché en Safari si hace falta.
+
 ## Tests
 
 ```bash

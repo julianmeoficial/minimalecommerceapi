@@ -14,7 +14,9 @@ Gracias por contribuir a MinimalEcommerce API. Este documento resume el flujo de
 git clone https://github.com/julianmeoficial/minimalecommerceapi.git
 cd minimalecommerceapi
 cp .env.example .env
+cp .env apps/api/.env
 pnpm install
+pnpm certs:dev          # TLS local (recomendado para Safari + Swagger)
 pnpm --filter api exec prisma migrate deploy
 pnpm --filter api exec prisma db seed
 pnpm dev
@@ -22,7 +24,26 @@ pnpm dev
 
 Alternativa: `docker compose up --build`.
 
-OpenAPI en vivo: http://localhost:8080/docs
+### Supabase (Postgres remoto)
+
+Si prefieres Postgres gestionado en lugar de Docker local, sigue [`docs/08-SUPABASE.md`](docs/08-SUPABASE.md).
+Resumen de lo que ya validamos en desarrollo:
+
+1. Copia `.env` a `apps/api/.env` — Prisma solo lee el de `apps/api`.
+2. Usa la connection string del **Session pooler** (`pooler.supabase.com:5432`), no la Direct ni Transaction (`6543`).
+3. Pega la contraseña de **Settings → Database** sin los corchetes `[...]` del placeholder.
+4. Ejecuta `prisma migrate deploy`, `prisma db seed` (opcional) y comprueba `GET /api/v1/health`.
+5. Redis sigue siendo necesario en local (`REDIS_URL`) para BullMQ; Supabase no lo incluye.
+
+Si ves `P1000 Authentication failed`, revisa la tabla de errores en `docs/08-SUPABASE.md`.
+
+OpenAPI (Swagger UI): **https://localhost:8080/docs** (tras `pnpm certs:dev`).
+Spec JSON: https://localhost:8080/docs-json
+
+**Safari:** prioriza la seguridad del usuario. Con TLS local verás un aviso por el certificado
+autofirmado; en localhost el riesgo es bajo — puedes **Mostrar detalles → visitar este sitio web**
+para entrar a Swagger. Sin TLS, HTTP suele funcionar en Chromium pero Safari puede dejar `/docs` en
+blanco; ver [`docs/07-DESARROLLO.md`](docs/07-DESARROLLO.md#tls-local-y-safari).
 
 ## Flujo de contribución
 

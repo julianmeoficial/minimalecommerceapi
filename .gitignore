@@ -6,6 +6,7 @@ coverage/
 *.log
 .DS_Store
 uploads/
+apps/api/certs/
 .idea/
 .vscode/
 apps/api/prisma/*.db
