@@ -59,19 +59,25 @@ async function bootstrap() {
     }),
   );
 
-  const swagger = new DocumentBuilder()
-    .setTitle('MinimalEcommerce API')
-    .setDescription('API REST marketplace — NestJS monolito modular (sin frontend)')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
+  const swaggerEnabled =
+    !isProduction || config.get<string>('SWAGGER_ENABLED') === 'true';
+  if (swaggerEnabled) {
+    const swagger = new DocumentBuilder()
+      .setTitle('MinimalEcommerce API')
+      .setDescription('API REST marketplace — NestJS monolito modular (sin frontend)')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
+  }
 
   const port = config.get<number>('PORT') ?? 8080;
   const protocol = httpsOptions ? 'https' : 'http';
   await app.listen(port);
   logger.log(`API listening on :${port} (${protocol.toUpperCase()})`);
-  logger.log(`Swagger UI: ${protocol}://localhost:${port}/docs`);
+  if (swaggerEnabled) {
+    logger.log(`Swagger UI: ${protocol}://localhost:${port}/docs`);
+  }
   if (!httpsOptions && !isProduction) {
     logger.warn(
       'Sin TLS local: Safari puede fallar con Swagger en HTTP. Ejecuta: pnpm certs:dev',

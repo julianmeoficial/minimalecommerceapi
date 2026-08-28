@@ -1,5 +1,6 @@
 import {
-  Body, Controller, Delete, Get, Param, Post, Put, Query, UploadedFile, UseInterceptors,
+  BadRequestException,
+  Body, Controller, Delete, Get, Param, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
@@ -8,13 +9,13 @@ import { CategoryDto, ProductDto } from './dto/catalog.dto';
 import { Public } from '../../shared/auth/public.decorator';
 import { Roles } from '../../shared/auth/roles.decorator';
 import { RolesGuard } from '../../shared/auth/roles.guard';
-import { UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { AuthUser, CurrentUser } from '../../shared/auth/current-user.decorator';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundError } from '../../shared/errors/api-error';
+import { imageUploadOptions } from '../../shared/media/image-upload';
 
 @ApiTags('catalog')
 @Controller({ path: '', version: '1' })
@@ -60,31 +61,42 @@ export class CatalogController {
   }
 
   @ApiBearerAuth()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.VENDEDOR, UserRole.SUPERADMIN)
   @Post('products')
   create(@CurrentUser() user: AuthUser, @Body() dto: ProductDto) {
     return this.catalog.create(user, dto);
   }
 
   @ApiBearerAuth()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.VENDEDOR, UserRole.SUPERADMIN)
   @Put('products/:id')
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: ProductDto) {
     return this.catalog.update(user, id, dto);
   }
 
   @ApiBearerAuth()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.VENDEDOR, UserRole.SUPERADMIN)
   @Post('products/:id/image')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
   image(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException('Falta el archivo de imagen');
+    }
     return this.catalog.attachImage(user, id, file);
   }
 
   @ApiBearerAuth()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.VENDEDOR, UserRole.SUPERADMIN)
   @Delete('products/:id')
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.catalog.deactivate(user, id);
