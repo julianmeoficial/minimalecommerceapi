@@ -1,10 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { configurarApp } from './compartido/config/configurar-app';
 import { resolveHttpsOptions } from './https-options';
 
 async function bootstrap() {
@@ -16,66 +14,19 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+    rawBody: true,
     ...(httpsOptions ? { httpsOptions } : {}),
   });
+
+  configurarApp(app);
   const config = app.get(ConfigService);
   const logger = app.get(Logger);
-  app.useLogger(logger);
-
   const isProduction = config.get<string>('NODE_ENV') === 'production';
-  const cspDirectives: Record<string, unknown> = {
-    ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-  };
-  // Helmet fusiona defaults: borrar la clave kebab no basta; hay que pasar null en camelCase.
-  if (!isProduction) {
-    delete cspDirectives['upgrade-insecure-requests'];
-    cspDirectives.upgradeInsecureRequests = null;
-  }
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        // null en upgradeInsecureRequests desactiva la directiva (Helmet 8)
-        directives: cspDirectives as NonNullable<
-          Parameters<typeof helmet.contentSecurityPolicy>[0]
-        >['directives'],
-      },
-    }),
-  );
-  app.enableCors({
-    origin: (config.get<string>('CORS_ORIGINS') ?? 'http://localhost:3000')
-      .split(',')
-      .map((o) => o.trim())
-      .filter(Boolean),
-    credentials: true,
-  });
-  app.setGlobalPrefix('api');
-  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
-
-  const swaggerEnabled =
-    !isProduction || config.get<string>('SWAGGER_ENABLED') === 'true';
-  if (swaggerEnabled) {
-    const swagger = new DocumentBuilder()
-      .setTitle('MinimalEcommerce API')
-      .setDescription('API REST marketplace — NestJS monolito modular (sin frontend)')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
-  }
-
-  const port = config.get<number>('PORT') ?? 8080;
+  const port = Number(config.get('PORT') ?? 8080);
   const protocol = httpsOptions ? 'https' : 'http';
   await app.listen(port);
-  logger.log(`API listening on :${port} (${protocol.toUpperCase()})`);
-  if (swaggerEnabled) {
+  logger.log(`API MinimalShop en :${port} (${protocol.toUpperCase()})`);
+  if (config.get<boolean>('SWAGGER_ENABLED')) {
     logger.log(`Swagger UI: ${protocol}://localhost:${port}/docs`);
   }
   if (!httpsOptions && !isProduction) {
@@ -84,4 +35,5 @@ async function bootstrap() {
     );
   }
 }
+
 bootstrap();

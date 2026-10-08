@@ -14,13 +14,20 @@ enum UserRole {
 }
 
 enum OrderStatus {
+  CREADO
   PENDIENTE_PAGO
   PAGADO
-  PENDIENTE
-  CONFIRMADO
+  EN_PREPARACION
   ENVIADO
   ENTREGADO
   CANCELADO
+  REEMBOLSADO
+}
+
+enum ReservationStatus {
+  ACTIVA
+  CONFIRMADA
+  LIBERADA
 }
 
 enum CouponType {
@@ -64,8 +71,27 @@ model User {
   favorites     Favorite[]
   blogPosts     BlogPost[]
   events        Event[]
+  refreshTokens RefreshToken[]
 
+  @@index([role])
   @@map("users")
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  family       String    @db.Uuid
+  tokenHash    String    @map("token_hash")
+  expiresAt    DateTime  @map("expires_at")
+  revokedAt    DateTime? @map("revoked_at")
+  replacedById String?   @map("replaced_by_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([family])
+  @@map("refresh_tokens")
 }
 
 model Address {
@@ -102,7 +128,7 @@ model Product {
   description String?
   price       Decimal  @db.Decimal(10, 2)
   stock       Int
-  imageUrl    String?  @map("image_url")
+  imageKey    String?  @map("image_key")
   categoryId  String   @map("category_id") @db.Uuid
   sellerId    String   @map("seller_id") @db.Uuid
   preorder    Boolean  @default(false)
@@ -110,15 +136,17 @@ model Product {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  category  Category   @relation(fields: [categoryId], references: [id])
-  seller    User       @relation("SellerProducts", fields: [sellerId], references: [id])
-  cartItems CartItem[]
-  reviews   Review[]
-  favorites Favorite[]
+  category     Category           @relation(fields: [categoryId], references: [id])
+  seller       User               @relation("SellerProducts", fields: [sellerId], references: [id])
+  cartItems    CartItem[]
+  reviews      Review[]
+  favorites    Favorite[]
+  reservations StockReservation[]
 
-  @@index([categoryId])
   @@index([sellerId])
-  @@index([active])
+  @@index([active, categoryId, price])
+  @@index([active, createdAt])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_name_trgm_idx")
   @@map("products")
 }
 
@@ -164,20 +192,23 @@ model Order {
   subtotal         Decimal     @db.Decimal(10, 2)
   discount         Decimal     @default(0) @db.Decimal(10, 2)
   total            Decimal     @db.Decimal(10, 2)
-  status           OrderStatus @default(PENDIENTE_PAGO)
+  status           OrderStatus @default(CREADO)
   shippingAddress  String      @map("shipping_address")
   couponId         String?     @map("coupon_id") @db.Uuid
   couponCode       String?     @map("coupon_code")
   idempotencyKey   String?     @map("idempotency_key")
   paymentRef       String?     @map("payment_ref")
+  cancelReason     String?     @map("cancel_reason")
+  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at")
 
-  buyer   User         @relation("BuyerOrders", fields: [buyerId], references: [id])
-  coupon  Coupon?      @relation(fields: [couponId], references: [id])
-  items   OrderItem[]
-  payment Payment?
+  buyer        User               @relation("BuyerOrders", fields: [buyerId], references: [id])
+  coupon       Coupon?            @relation(fields: [couponId], references: [id])
+  items        OrderItem[]
+  payment      Payment?
+  reservations StockReservation[]
 
   @@unique([buyerId, idempotencyKey])
-  @@index([buyerId])
+  @@index([buyerId, placedAt])
   @@index([status])
   @@map("orders")
 }
@@ -195,23 +226,54 @@ model OrderItem {
 
   @@index([orderId])
   @@index([sellerId])
+  @@index([productId])
   @@map("order_items")
 }
 
+model StockReservation {
+  id        String            @id @default(uuid()) @db.Uuid
+  orderId   String            @map("order_id") @db.Uuid
+  productId String            @map("product_id") @db.Uuid
+  quantity  Int
+  status    ReservationStatus @default(ACTIVA)
+  expiresAt DateTime          @map("expires_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([status, expiresAt])
+  @@map("stock_reservations")
+}
+
 model Payment {
-  id          String        @id @default(uuid()) @db.Uuid
-  orderId     String        @unique @map("order_id") @db.Uuid
-  provider    String        @default("stripe")
-  externalId  String?       @map("external_id")
-  amount      Decimal       @db.Decimal(10, 2)
-  currency    String        @default("usd")
-  status      PaymentStatus @default(PENDING)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id               String        @id @default(uuid()) @db.Uuid
+  orderId          String        @unique @map("order_id") @db.Uuid
+  provider         String        @default("stripe")
+  externalId       String?       @unique @map("external_id")
+  amount           Decimal       @db.Decimal(10, 2)
+  currency         String        @default("usd")
+  status           PaymentStatus @default(PENDING)
+  lastReconciledAt DateTime?     @map("last_reconciled_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   order Order @relation(fields: [orderId], references: [id])
 
+  @@index([status, createdAt])
   @@map("payments")
+}
+
+model PaymentEvent {
+  id              String   @id @default(uuid()) @db.Uuid
+  provider        String
+  providerEventId String   @unique @map("provider_event_id")
+  type            String
+  receivedAt      DateTime @default(now()) @map("received_at")
+
+  @@map("payment_events")
 }
 
 model Notification {
@@ -225,7 +287,7 @@ model Notification {
 
   user User @relation(fields: [userId], references: [id])
 
-  @@index([userId])
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 
@@ -243,6 +305,7 @@ model Review {
   product Product @relation(fields: [productId], references: [id])
 
   @@unique([authorId, productId])
+  @@index([productId, createdAt])
   @@map("reviews")
 }
 

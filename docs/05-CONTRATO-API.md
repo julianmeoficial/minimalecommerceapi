@@ -1,101 +1,115 @@
-# 05 — Contrato HTTP
+# 05 — Contrato HTTP (MinimalShop)
 
-Prefijo: **`/api/v1`**. OpenAPI vivo: [`/docs`](http://localhost:8080/docs).
-Sujeto = claim `sub` del JWT. Respuestas y bodies son DTOs (nunca modelos Prisma).
+- **Prefijo:** `/api`
+- **Versión:** URI `v1` → rutas de negocio `/api/v1/...`
+- **OpenAPI:** `/docs` (si `SWAGGER_ENABLED=true`)
+- **Autenticación:** `Authorization: Bearer <accessToken>` salvo rutas `@Publico`
+- **Errores:** JSON con `code`, `message`, `details`, `timestamp`, `path`, `correlationId`
+- **Integración frontend:** ver [GUIA-FRONTEND.md](./GUIA-FRONTEND.md)
 
-## Agrupación por capacidad
+## Mapa de capacidades
 
 ```mermaid
 flowchart TB
   subgraph identity [Identidad]
-    A["/auth"]
-    Me["/me"]
+    Auth["/v1/auth"]
+    Usr["/v1/usuarios"]
   end
-
-  subgraph catalog [Catalogo]
-    P["/products"]
-    Cat["/categories"]
-    Media["/media/:filename"]
+  subgraph catalog [Catálogo]
+    Cat["/v1/catalogo"]
+    VenP["/v1/vendedor/productos"]
   end
-
-  subgraph ordering [Comercio]
-    Cart["/cart"]
-    Ord["/orders"]
-    Pay["/payments"]
+  subgraph commerce [Comercio]
+    Cart["/v1/carrito"]
+    Ord["/v1/pedidos"]
+    Pay["/v1/pagos"]
+    VenO["/v1/vendedor/pedidos"]
   end
-
-  subgraph complements [Complementos]
-    Cup["/coupons"]
-    Rev["/reviews"]
-    Fav["/favorites"]
-    Blog["/blog/posts"]
-    Ev["/events"]
-    FF["/feature-flags"]
+  subgraph comp [Complementos]
+    Cup["/v1/cupones"]
+    Fav["/v1/favoritos"]
+    Cont["/v1/contenido"]
+    Res["/v1/resenas"]
   end
-
-  subgraph other [Ops]
-    N["/notifications"]
-    R["/reports"]
-    H["/health"]
+  subgraph ops [Operación]
+    Adm["/v1/admin"]
+    Notif["/v1/notificaciones"]
+    Salud["/salud"]
   end
 ```
 
 ## Endpoints principales
 
+### Auth e identidad
+
 | Método | Ruta | Auth | Notas |
-|---|---|---|---|
-| `POST` | `/auth/register` | público | Roles `COMPRADOR` \| `VENDEDOR` |
-| `POST` | `/auth/login` | público | Devuelve Bearer JWT |
-| `GET/PUT` | `/me` | JWT | Perfil |
-| `GET/POST/DELETE` | `/me/addresses` | JWT | Direcciones |
-| `GET` | `/categories`, `/products` | público | Productos paginados |
-| `POST/PUT/DELETE` | `/products` | VENDEDOR+ | Mutación + invalidación de caché |
-| `POST` | `/products/:id/image` | VENDEDOR | multipart `file` |
-| `GET/POST/PUT/DELETE` | `/cart`, `/cart/items` | JWT | Carrito del sujeto |
-| `POST` | `/cart/checkout` | JWT | Header opcional `Idempotency-Key` |
-| `GET` | `/orders`, `/orders/sold`, `/orders/:id` | JWT | Buyer / seller |
-| `PUT` | `/orders/:id/status` | VENDEDOR | Cumplimiento |
-| `POST` | `/orders/:id/cancel` | comprador | Restaura stock |
-| `POST` | `/payments/orders/:id/intent` | JWT | Crea PaymentIntent |
-| `POST` | `/payments/orders/:id/confirm` | JWT | Marca `PAGADO` |
-| `POST/GET` | `/coupons` | VENDEDOR+ / público | Crear / consultar código |
-| `POST/GET` | `/reviews` | COMPRADOR / público | Feature flag `reviews` |
-| `GET/POST/DELETE` | `/favorites` | COMPRADOR | Feature flag `favorites` |
-| `GET/POST` | `/blog/posts`, `/events` | mixto | Feature flags |
-| `GET/PUT` | `/feature-flags` | SUPERADMIN | Activar módulos |
-| `GET` | `/notifications` | JWT | Lista del usuario |
-| `GET` | `/reports/seller`, `/platform` | VENDEDOR / SUPERADMIN | Métricas |
-| `GET` | `/health` | público | `SELECT 1` |
+|--------|------|------|-------|
+| POST | `/v1/auth/registro` | público | `rol`: `COMPRADOR` \| `VENDEDOR` |
+| POST | `/v1/auth/ingreso` | público | Sesión con tokens |
+| POST | `/v1/auth/refrescar` | público | Rotación refresh |
+| POST | `/v1/auth/salir` | público | Revoca refresh |
+| GET/PATCH | `/v1/usuarios/yo` | JWT | Perfil |
+| GET/POST/DELETE | `/v1/usuarios/yo/direcciones` | JWT | Direcciones |
+| GET/PATCH | `/v1/admin/usuarios` | SUPERADMIN | Admin usuarios |
 
-## Errores
+### Catálogo
 
-```json
-{
-  "code": "STOCK_INSUFFICIENT",
-  "message": "No hay stock suficiente",
-  "details": [],
-  "timestamp": "2026-08-27T01:00:00.000Z",
-  "path": "/api/v1/cart/checkout",
-  "correlationId": "…"
-}
-```
+| Método | Ruta | Auth | Notas |
+|--------|------|------|-------|
+| GET | `/v1/catalogo/productos` | público | Paginado, filtros `q`, `categoriaId`, `orden` |
+| GET | `/v1/catalogo/productos/:id` | público | Detalle |
+| GET | `/v1/catalogo/productos/:id/resenas` | público | Módulo `resenas` |
+| GET | `/v1/catalogo/categorias` | público | Listado |
+| GET/POST/PATCH | `/v1/vendedor/productos` | VENDEDOR | CRUD |
+| POST | `/v1/vendedor/productos/:id/publicar` | VENDEDOR | |
+| PUT | `/v1/vendedor/productos/:id/imagen` | VENDEDOR | multipart `archivo` |
+| PUT | `/v1/vendedor/productos/:id/existencias` | VENDEDOR | |
+| POST/PATCH/DELETE | `/v1/admin/categorias` | SUPERADMIN | |
 
-Status habituales: `400` validación / regla de negocio, `401` sin token, `403` rol, `404` recurso, `409` conflicto (stock, cupón, email).
+### Carrito y pedidos
 
-## Paginación
+| Método | Ruta | Auth | Notas |
+|--------|------|------|-------|
+| GET/DELETE | `/v1/carrito` | COMPRADOR | |
+| POST/PUT/DELETE | `/v1/carrito/items` | COMPRADOR | |
+| POST | `/v1/pedidos` | COMPRADOR | Header **`Idempotency-Key`** obligatorio |
+| GET | `/v1/pedidos`, `/v1/pedidos/:id` | JWT | Comprador o involucrado |
+| POST | `/v1/pedidos/:id/cancelar` | COMPRADOR | |
+| POST | `/v1/pedidos/:id/recibido` | COMPRADOR | `ENVIADO` → `ENTREGADO` |
+| GET | `/v1/vendedor/pedidos` | VENDEDOR | Paginado |
+| PATCH | `/v1/vendedor/pedidos/:id/estado` | VENDEDOR | CU-09 |
 
-Listados de productos y pedidos:
+### Pagos
 
-```json
-{
-  "content": [],
-  "page": 0,
-  "size": 20,
-  "totalElements": 0,
-  "totalPages": 0
-}
-```
+| Método | Ruta | Auth | Notas |
+|--------|------|------|-------|
+| POST | `/v1/pagos/pedidos/:id/intento` | COMPRADOR | Crea intento; sin confirm cliente |
+| GET | `/v1/pagos/pedidos/:id` | JWT | Estado del pago |
+| POST | `/v1/pagos/webhook` | público | Cuerpo crudo Stripe |
+| POST | `/v1/pagos/simulador/pedidos/:id/aprobar` | SUPERADMIN | Solo `mock` + no producción |
+| POST | `/v1/pagos/simulador/pedidos/:id/rechazar` | SUPERADMIN | Idem |
 
-## Idempotencia
+### Complementos y ops
 
-`POST /cart/checkout` acepta `Idempotency-Key`. Misma clave + mismo comprador → mismo pedido (unique `(buyer_id, idempotency_key)`).
+| Método | Ruta | Auth | Módulo |
+|--------|------|------|--------|
+| GET/POST | `/v1/vendedor/cupones` | VENDEDOR | cupones |
+| GET | `/v1/cupones/:codigo` | público | cupones |
+| GET/POST/DELETE | `/v1/favoritos` | COMPRADOR | favoritos |
+| GET/POST | `/v1/contenido/publicaciones`, `/eventos` | mixto | contenido |
+| POST/DELETE | `/v1/resenas` | COMPRADOR | resenas |
+| GET/PATCH | `/v1/notificaciones` | JWT | notificaciones |
+| GET | `/v1/vendedor/metricas` | VENDEDOR | reportes |
+| GET | `/v1/admin/reportes/plataforma`, `/ventas` | SUPERADMIN | |
+| GET/PATCH | `/v1/admin/modulos` | SUPERADMIN | registro módulos |
+| GET | `/v1/medios/:clave` | público | Solo driver local |
+| GET | `/salud/vida`, `/salud/listo` | público | Terminus |
+
+## Ciclo de vida del pedido
+
+`CREADO` → `PENDIENTE_PAGO` → `PAGADO` → `EN_PREPARACION` → `ENVIADO` → `ENTREGADO`  
+Estados terminales: `CANCELADO`, `REEMBOLSADO`.
+
+## Códigos de error (selección)
+
+Ver `apps/api/src/compartido/errores/codigos-error.ts`. Destacados: `STOCK_INSUFFICIENT`, `EMPTY_CART`, `IDEMPOTENCY_KEY_REQUIRED`, `MODULE_DISABLED`, `ORDER_NOT_PAYABLE`, `PAYMENT_PROVIDER_UNAVAILABLE`, `REVIEW_NOT_ALLOWED`.

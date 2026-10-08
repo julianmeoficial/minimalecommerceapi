@@ -95,7 +95,7 @@ async function main() {
     },
   });
 
-  for (const key of ['reviews', 'favorites', 'blog', 'events']) {
+  for (const key of ['cupones', 'resenas', 'favoritos', 'contenido', 'notificaciones']) {
     await prisma.featureFlag.upsert({
       where: { key },
       update: { enabled: true },
