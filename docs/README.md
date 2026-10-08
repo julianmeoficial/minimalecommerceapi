@@ -11,6 +11,10 @@ Documentación operativa del backend actual (NestJS). Empieza por el [README de 
 | [03 — Flujos](03-FLUJOS.md) | Auth, catálogo, checkout, pagos, eventos |
 | [04 — Conexiones](04-CONEXIONES.md) | Despliegue local, Redis, Supabase, Stripe |
 | [05 — Contrato HTTP](05-CONTRATO-API.md) | Superficie `/api/v1`, errores, paginación |
+| [GUIA-FRONTEND.md](GUIA-FRONTEND.md) | Auth, headers, errores y flujos para el cliente |
+| [CAPACIDADES-API.md](CAPACIDADES-API.md) | Qué puede hacer la API hoy y límites |
+| [PRUEBAS-API.md](PRUEBAS-API.md) | Resultados y comandos de pruebas |
+| [ROTACION-SECRETOS.md](ROTACION-SECRETOS.md) | JWT, Stripe y credenciales |
 | [06 — Estructura del repo](06-ESTRUCTURA.md) | Árbol de archivos y módulos |
 | [07 — Desarrollo](07-DESARROLLO.md) | Scripts, seed, tests, variables de entorno |
 | [08 — Supabase](08-SUPABASE.md) | Conectar Postgres/Storage de Supabase |

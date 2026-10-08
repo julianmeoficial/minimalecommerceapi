@@ -38,8 +38,19 @@ jobs:
       MEDIA_DRIVER: local
       UPLOAD_DIR: /tmp/me-uploads
       CORS_ORIGINS: http://localhost:3000
+      SWAGGER_ENABLED: 'false'
+      PAYMENT_PROVIDER: mock
+      THROTTLE_LIMIT: 10000
+      THROTTLE_AUTH_LIMIT: 1000
+      TRABAJOS_PROGRAMADOS: 'false'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: pnpm/action-setup@v4
         with:
           version: 10
@@ -54,15 +65,12 @@ jobs:
         run: |
           pnpm exec prisma generate
           pnpm exec prisma migrate deploy
-      - name: Unit tests
+      - name: Unit tests + cobertura
         working-directory: apps/api
-        run: pnpm test -- --passWithNoTests
-      - name: E2E marketplace
+        run: pnpm exec jest --watchman=false --coverage
+      - name: E2E fase 5
         working-directory: apps/api
-        run: pnpm exec jest --config ./test/jest-e2e.json --testPathPatterns=marketplace
-      - name: E2E security
-        working-directory: apps/api
-        run: pnpm exec jest --config ./test/jest-e2e.json --testPathPatterns=security
+        run: pnpm test:e2e
       - name: Build
         working-directory: apps/api
         run: pnpm run build

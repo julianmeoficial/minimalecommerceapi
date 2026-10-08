@@ -9,7 +9,7 @@
 | `pnpm build` | Compila la API |
 | `pnpm start` | Arranque producción (`dist`) |
 | `pnpm test` | Unitarios |
-| `pnpm test:e2e` | E2E marketplace |
+| `pnpm test:e2e` | E2E Fase 5 (`test/fase5.e2e-spec.ts`) |
 | `pnpm prisma:generate` | Genera Prisma Client |
 | `pnpm prisma:migrate` | `prisma migrate dev` |
 | `pnpm prisma:seed` | Seed de desarrollo |
@@ -24,7 +24,9 @@ Copia `.env.example` → `.env` (nunca commitear secretos).
 |---|---|---|
 | `DATABASE_URL` | sí | Postgres (local o Supabase) |
 | `JWT_SECRET` | sí | ≥ 32 caracteres en prod |
-| `JWT_EXPIRES_IN` | no | Default `1d` |
+| `JWT_ACCESS_TTL` / `JWT_REFRESH_TTL_DIAS` | no | Access 15m, refresh 7d |
+| `SWAGGER_ENABLED` | no | `true` en dev |
+| `PAYMENT_PROVIDER` | no | `mock` \| `stripe` |
 | `REDIS_URL` | sí* | BullMQ (`redis://localhost:6379`) |
 | `PORT` | no | Default `8080` |
 | `CORS_ORIGINS` | no | Lista separada por comas |
