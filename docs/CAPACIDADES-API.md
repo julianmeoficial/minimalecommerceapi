@@ -1,6 +1,6 @@
 # Análisis de capacidades — MinimalShop API (estado actual)
 
-Monolito NestJS 11 modular en español (`compartido/` + `modulos/`). Prefijo HTTP: **`/api`**, versión por defecto **`v1`**. Salud sin versión: **`/api/salud/*`**.
+Monolito NestJS 11 modular en español (`compartido/` + `modulos/`). Prefijo HTTP: **`/api`**, versión por defecto **`v1`**. Salud sin versión: **`/api/salud/*`**. Quién hospeda Postgres y cómo encaja el flujo: [BALANCE-OPERATIVO.md](BALANCE-OPERATIVO.md).
 
 ## Listo para producción de desarrollo / integración frontend
 

@@ -41,7 +41,7 @@ flowchart TB
   In["TCP PORT (default 8080)"]
   In --> Api["/api/v1/** REST"]
   In --> Docs["/docs OpenAPI"]
-  In --> Health["/api/v1/health"]
+  In --> Health["/api/salud/vida y /api/salud/listo"]
 
   Api --> JSON["application/json"]
   Api --> MP["multipart product images"]

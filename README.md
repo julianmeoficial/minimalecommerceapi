@@ -2,7 +2,9 @@
 
 Backend REST de un marketplace (comprador / vendedor / superadmin). **Sin frontend**: solo la API, el esquema y el contrato HTTP.
 
-**Stack:** NestJS · TypeScript · Prisma · PostgreSQL (Supabase) · Redis / BullMQ · JWT + Argon2 · Stripe (sandbox)
+**Stack:** NestJS · TypeScript · Prisma · PostgreSQL (local, Docker o Supabase) · Redis / BullMQ · JWT + Argon2 · Stripe (sandbox)
+
+Postgres por defecto del Compose y de CI es **local**. Supabase es el Postgres remoto opcional (hoy el proyecto `MinimalShop_API` en la cuenta Monica_BK). Ver [docs/08-SUPABASE.md](docs/08-SUPABASE.md) y [docs/BALANCE-OPERATIVO.md](docs/BALANCE-OPERATIVO.md).
 
 ## Inicio rápido
 
@@ -20,7 +22,7 @@ pnpm dev
 |---|---|
 | API | https://localhost:8080/api/v1 (con `pnpm certs:dev`) |
 | OpenAPI | https://localhost:8080/docs |
-| Health | https://localhost:8080/api/v1/health |
+| Salud | https://localhost:8080/api/salud/vida y `/api/salud/listo` |
 
 **Safari:** puede mostrar un aviso por el certificado local autofirmado; es normal (privacidad
 estricta). En desarrollo puedes continuar al sitio — ver [docs/07-DESARROLLO.md](docs/07-DESARROLLO.md#tls-local-y-safari).
@@ -35,31 +37,33 @@ docker compose up --build
 
 | Módulo | Responsabilidad |
 |---|---|
-| `identity` | Registro, login JWT, perfil, direcciones, RBAC |
-| `catalog` | Categorías, productos, caché de lecturas, media |
-| `inventory` | Stock atómico (`decrementIfAvailable` / `restore`) |
-| `cart` | Carrito autenticado |
-| `orders` | Checkout transaccional + evento `OrderPlaced` |
-| `payments` | Puerto `PaymentGateway` + Stripe (o mock local) |
-| `notifications` | Consumer BullMQ de pedidos |
-| `reports` | Métricas de vendedor / plataforma |
-| `complements` | Cupones, reseñas, favoritos, blog, eventos, feature flags |
-| `shared` | Prisma, guards, filtros, logging, throttling, OpenAPI |
+| `usuarios` | Registro, ingreso JWT, perfil, direcciones, RBAC |
+| `catalogo` | Categorías, productos, caché de lecturas |
+| `inventario` | Stock del vendedor |
+| `carrito` | Carrito del comprador |
+| `pedidos` | Checkout con `Idempotency-Key` y máquina de estados |
+| `pagos` | Intento de pago, webhook Stripe o simulador mock |
+| `notificaciones` | Cola BullMQ |
+| `reportes` | Métricas de vendedor / plataforma |
+| `complementarios` | Cupones, favoritos, contenido, flags |
+| `resenas` | Reseñas tras pedido entregado |
+| `compartido` | Prisma, guards, filtros, logging, throttling, OpenAPI, salud |
 
 ## Contrato
 
-Prefijo **`/api/v1`**. El sujeto viene del JWT (no se acepta `usuarioId` en la URL como autorización).
+Prefijo **`/api/v1`**. Salud **sin** versión: `/api/salud/*`. El sujeto viene del JWT (no se acepta `usuarioId` en la URL como autorización). Detalle en [docs/05-CONTRATO-API.md](docs/05-CONTRATO-API.md).
 
 | Área | Rutas principales |
 |---|---|
-| Auth | `POST /auth/register`, `POST /auth/login` |
-| Perfil | `GET/PUT /me`, `/me/addresses` |
-| Catálogo | `GET /products`, `POST /products` (vendedor) |
-| Carrito | `GET/POST /cart`, `POST /cart/checkout` |
-| Pedidos | `GET /orders`, `GET /orders/sold` |
-| Pagos | `POST /payments/orders/:id/intent`, `/confirm` |
-| Cupones / engagement | `/coupons`, `/reviews`, `/favorites`, `/notifications` |
-| Reportes | `/reports/seller`, `/reports/platform` |
+| Auth | `POST /auth/registro`, `POST /auth/ingreso`, `/refrescar`, `/salir` |
+| Perfil | `GET/PATCH /usuarios/yo`, `/usuarios/yo/direcciones` |
+| Catálogo | `GET /catalogo/productos`, `POST /vendedor/productos` |
+| Carrito | `GET /carrito`, `POST /carrito/items` |
+| Pedidos | `POST /pedidos` (`Idempotency-Key`), `GET /vendedor/pedidos` |
+| Pagos | `POST /pagos/pedidos/:id/intento` (no hay confirm del cliente) |
+| Complementos | `/cupones`, `/resenas`, `/favoritos`, `/notificaciones` |
+| Reportes | `/vendedor/metricas`, `/admin/reportes/plataforma` |
+| Salud | `GET /api/salud/vida`, `GET /api/salud/listo` |
 
 Errores: `{ code, message, details, timestamp, path, correlationId }`. Checkout acepta cabecera `Idempotency-Key`.
 

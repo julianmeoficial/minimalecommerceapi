@@ -18,7 +18,10 @@ Documentación operativa del backend actual (NestJS). Empieza por el [README de 
 | [06 — Estructura del repo](06-ESTRUCTURA.md) | Árbol de archivos y módulos |
 | [07 — Desarrollo](07-DESARROLLO.md) | Scripts, seed, tests, variables de entorno |
 | [08 — Supabase](08-SUPABASE.md) | Conectar Postgres/Storage de Supabase |
+| [BALANCE-OPERATIVO.md](BALANCE-OPERATIVO.md) | Cómo funciona la API y quién hospeda la base |
 | [09 — Testeo de seguridad](09-TESTEO-SEGURIDAD.md) | Auditoría defensiva, hallazgos y cómo re-ejecutar tests |
+
+[00-ESTADO-OBSOLETO.md](00-ESTADO-OBSOLETO.md) solo redirige al archivo histórico Spring. No es documentación operativa.
 
 También: [CHANGELOG](../CHANGELOG.md) · [CONTRIBUTING](../CONTRIBUTING.md)
 
