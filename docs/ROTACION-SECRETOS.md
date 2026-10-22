@@ -17,4 +17,18 @@ Sin `JWT_KEYS`, se usa `JWT_SECRET` con `kid` implícito `default`.
 
 ## Base de datos y Redis
 
-Rotar credenciales en el proveedor, actualizar `DATABASE_URL` / `REDIS_URL` y reiniciar las instancias de la API.
+1. Rota la contraseña en el proveedor (en Supabase: **Project Settings → Database → Reset database password**).
+2. Actualiza `DATABASE_URL` en la raíz **y** en `apps/api/.env` (Prisma no lee el `.env` de la raíz).
+3. Reinicia la API.
+4. Comprueba `GET /api/salud/listo` (Postgres + Redis). `/api/salud/vida` solo dice que el proceso responde.
+
+`REDIS_URL` se rota igual: nuevo secreto en el proveedor, actualizar la variable, reiniciar.
+
+## Supabase (`service_role` y Storage)
+
+Al cambiar de proyecto o de cuenta (hoy **Monica_BK** / `MinimalShop_API`, ref `rbgidchvwvadwxuidsxj`):
+
+1. Copia la nueva Project URL a `SUPABASE_URL` y el secreto **service_role** a `SUPABASE_SERVICE_ROLE_KEY`. No uses la clave anon.
+2. Si las imágenes van a Storage (`MEDIA_DRIVER=supabase`), crea el bucket (`SUPABASE_STORAGE_BUCKET`, por defecto `product-images`). Los objetos del proyecto anterior no se mueven solos.
+3. Revoca el `service_role` y la contraseña de Database del proyecto que dejas de usar.
+4. Los JWT de la API (`JWT_SECRET` / `JWT_KEYS`) no dependen de Supabase: siguen válidos hasta que los rotes aparte.

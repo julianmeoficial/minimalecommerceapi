@@ -8,6 +8,8 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
+- Balance operativo (`docs/BALANCE-OPERATIVO.md`): stack, flujo de compra y ownership de Postgres
+  en Monica_BK (`MinimalShop_API`).
 - Guía operativa de Supabase (`docs/08-SUPABASE.md`): variables de entorno, migraciones Prisma,
   errores frecuentes y comprobación de salud de la API.
 - TLS local para desarrollo: `pnpm certs:dev` genera certificados en `apps/api/certs/` y la API
@@ -17,18 +19,22 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 
-- Documentación reorganizada: se eliminan guías de remodelación / legacy Spring;
-  quedan README, CHANGELOG, CONTRIBUTING y docs operativas del stack NestJS.
+- Documentación alineada al contrato en español: README, salud `/api/salud/*`, módulos
+  `compartido/` + `modulos/`, y archivo del texto Spring en `docs/archivo/00-ESTADO-OBSOLETO.md`.
+- Postgres remoto de desarrollo: proyecto **MinimalShop_API** en org **Monica_BK**
+  (`rbgidchvwvadwxuidsxj`, región `us-east-1`). Schema aplicado con las 3 migraciones Prisma
+  y seed demo.
 
 ### Fixed
 
-- Conexión a PostgreSQL en Supabase validada de punta a punta (desarrollo local):
-  - **Causa del `P1000`:** la `DATABASE_URL` incluía corchetes literales `[...]` alrededor de la
-    contraseña (placeholder del dashboard de Supabase), por lo que Postgres rechazaba las credenciales.
-  - **Ajustes aplicados:** contraseña sin corchetes, **Session pooler** en puerto `5432` (no Transaction
-    `6543`), mismo `.env` en raíz y `apps/api/.env` (Prisma lee desde `apps/api`).
-  - **Resultado:** `prisma migrate deploy` (2 migraciones), `prisma db seed` y
-    `GET /api/v1/health` → `{"status":"ok"}` contra la base remota.
+- Conexión a PostgreSQL en Supabase (handoff Monica_BK):
+  - **Causa del `P1000`:** contraseña de Database incorrecta (el formato Session pooler
+    `postgres.<ref>@aws-0-<region>.pooler.supabase.com:5432` ya era válido). También puede
+    fallar si se copian corchetes `[...]` del placeholder del dashboard.
+  - **Ajustes:** password real en raíz y `apps/api/.env`, `JWT_SECRET` también en `apps/api/.env`,
+    Session pooler puerto `5432` (no Transaction `6543`).
+  - **Resultado:** `prisma migrate deploy` (3 migraciones), `prisma db seed`, salud
+    `GET /api/salud/listo` (no existe `/api/v1/health`).
 - Swagger UI en blanco en **Safari** (localhost), resuelto con TLS local y ajuste de CSP:
   - **Causa HTTP:** Helmet CSP con `upgrade-insecure-requests`; Safari fuerza HTTPS en assets de `/docs`.
   - **Causa HTTPS:** certificado autofirmado de `pnpm certs:dev` — Safari muestra aviso de seguridad

@@ -1,70 +1,119 @@
 # 08 — Conectar Supabase
 
-La API Nest **no usa** `NEXT_PUBLIC_*` (eso es convención de Next.js en el frontend). En el backend usamos las variables de `.env.example`.
+La API Nest **no usa** `NEXT_PUBLIC_*` (eso es convención de Next.js). El backend lee las variables de `.env.example`.
 
-## Qué copiar desde el dashboard de Supabase
+Supabase aquí es **Postgres** (Prisma) y, si se activa, **Storage**. La autenticación de la API es JWT propio (`POST /api/v1/auth/ingreso`), no Supabase Auth. Redis no viene con Supabase.
+
+## Proyecto actual
+
+| | |
+|---|---|
+| Organización | Monica_BK |
+| Proyecto | MinimalShop_API |
+| Ref | `rbgidchvwvadwxuidsxj` |
+| URL | `https://rbgidchvwvadwxuidsxj.supabase.co` |
+| Región | East US (North Virginia), `us-east-1` |
+| Pooler de sesión | `aws-0-us-east-1.pooler.supabase.com:5432` |
+
+El proyecto anterior (otra cuenta) se eliminó. No hay dump que restaurar: el esquema se vuelve a crear con Prisma.
+
+## Qué copiar desde el dashboard
 
 | En Supabase | Variable en `.env` (raíz **y** `apps/api/`) |
 |---|---|
 | Project URL (`https://….supabase.co`) | `SUPABASE_URL` |
 | **service_role** (Settings → API → *secret*) | `SUPABASE_SERVICE_ROLE_KEY` |
-| Connection string → **URI** (Settings → Database) | `DATABASE_URL` |
-| Nombre del bucket de Storage (ej. `product-images`) | `SUPABASE_STORAGE_BUCKET` |
+| Connection string → URI → **Session pooler** (puerto 5432) | `DATABASE_URL` |
+| Nombre del bucket (ej. `product-images`) | `SUPABASE_STORAGE_BUCKET` |
 
-**No uses** la *publishable* / *anon* key como `SUPABASE_SERVICE_ROLE_KEY`: solo sirve para clientes con RLS. El backend y Prisma necesitan la **service role** (Storage) y la **connection string de Postgres** (Prisma).
+**No uses** la clave *publishable* / *anon* como `SUPABASE_SERVICE_ROLE_KEY` ni como contraseña de `DATABASE_URL`. Prisma necesita la contraseña de **Database**. El `service_role` solo hace falta para Storage.
+
+Prisma **solo** lee `apps/api/.env`. Después de editar la raíz:
+
+```bash
+cp .env apps/api/.env
+```
 
 ## Plantilla `.env`
 
-Crea `.env` en la **raíz** y copia el mismo archivo a `apps/api/.env` (Prisma lee desde `apps/api`).
+Alineada con [`.env.example`](../.env.example). Sustituye `TU_PASSWORD` por la contraseña de Database (sin corchetes).
 
 ```env
 NODE_ENV=development
 PORT=8080
 
-# Supabase → Database → Connection string → URI → pestaña "Session pooler" (puerto 5432)
-# Pega SOLO la contraseña de Database, sin corchetes [] del placeholder
-DATABASE_URL=postgresql://postgres.[PROJECT_REF]:TU_PASSWORD@aws-0-[REGION].pooler.supabase.com:5432/postgres?schema=public
+# Session pooler, puerto 5432. No uses Direct (db.*.supabase.co) ni Transaction (6543) para migraciones.
+DATABASE_URL=postgresql://postgres.rbgidchvwvadwxuidsxj:TU_PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres?schema=public
+REDIS_URL=redis://localhost:6379
 
 JWT_SECRET=genera-un-secreto-largo-minimo-32-caracteres
-JWT_EXPIRES_IN=1d
-REDIS_URL=redis://localhost:6379
-CORS_ORIGINS=http://localhost:3000
+JWT_ACCESS_TTL=15m
+JWT_REFRESH_TTL_DIAS=7
 
-SUPABASE_URL=https://TU_PROJECT_REF.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...   # service_role, NO publishable
-SUPABASE_STORAGE_BUCKET=product-images
+CORS_ORIGINS=http://localhost:3000
+SWAGGER_ENABLED=true
+PAYMENT_PROVIDER=mock
 
 MEDIA_DRIVER=local
-UPLOAD_DIR=./uploads
-
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+UPLOAD_DIR=../../.data/uploads
+SUPABASE_URL=https://rbgidchvwvadwxuidsxj.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_STORAGE_BUCKET=product-images
 ```
 
-Para **subir imágenes a Supabase Storage**: crea el bucket `product-images` (público o con políticas) y pon `MEDIA_DRIVER=supabase`.
+Si la contraseña contiene `@`, `#`, `%`, `&` u otros caracteres reservados en una URL, codifica **solo** ese segmento con `encodeURIComponent`.
 
-## Aplicar schema en Supabase
+`JWT_SECRET`, `REDIS_URL`, Stripe, SMTP y CORS **no** cambian al mover el proyecto de Supabase.
+
+Para subir imágenes a Storage: crea el bucket `product-images` y pon `MEDIA_DRIVER=supabase`. Con `local`, las fotos quedan en disco y no dependen de este proyecto.
+
+## Aplicar el esquema
 
 ```bash
 pnpm install
 pnpm --filter api exec prisma generate
 pnpm --filter api exec prisma migrate deploy
-pnpm --filter api exec prisma db seed   # opcional
+pnpm --filter api exec prisma db seed   # opcional: usuarios demo
 pnpm dev
 ```
 
-Comprueba: `GET http://localhost:8080/api/v1/health` → `{"status":"ok"}`.
+Comprueba:
+
+- `GET http://localhost:8080/api/salud/vida` → `{"status":"ok"}` (proceso vivo; no toca la base).
+- `GET http://localhost:8080/api/salud/listo` → Postgres y Redis responden.
+
+No existe `/api/v1/health`.
+
+Migraciones, en orden: `20260327000000_init` → `20260327000001_rls_basics` → `20261008000000_fase5_hardening`.
+
+## Cambio de cuenta o proyecto nuevo
+
+1. Crea (o usa) el proyecto vacío en la cuenta destino.
+2. Copia URL, **service_role** y la URI del **Session pooler** (región real del proyecto).
+3. Duplica `.env` en la raíz y en `apps/api/.env`.
+4. `prisma migrate deploy` y, si quieres datos de demo, `prisma db seed`.
+5. Reinicia la API y llama a `/api/salud/listo`.
+6. Si `MEDIA_DRIVER=supabase`, recrea el bucket. Los objetos del proyecto viejo no se copian solos.
+7. Revoca la contraseña de Database y el `service_role` del proyecto que ya no se usa.
 
 ## Errores frecuentes
 
 | Error | Causa | Solución |
 |---|---|---|
-| `P1000 Authentication failed` | Contraseña con corchetes `[...]` copiados del placeholder, o clave API en vez de password de DB | Usa la contraseña real de Settings → Database; si tiene `@`, `#`, `%`, etc., codifícala con `encodeURIComponent` |
-| `P1001 Can't reach server` | Connection string "Direct" (`db.*.supabase.co:5432`) sin IPv4 | Usa **Session pooler** (`pooler.supabase.com:5432`) |
-| Prisma lee otro `.env` | Solo editaste `.env` en la raíz | `cp .env apps/api/.env` antes de `prisma migrate` |
+| `P1000 Authentication failed` | La contraseña de Database no es la del servidor. El formato de la URI puede estar bien y aun así fallar. Prisma a veces nombra el rol como `postgres` aunque el usuario sea `postgres.<ref>`. | En **Project Settings → Database**, resetea la contraseña y pégala en **ambos** `.env`. No uses la anon key, el `service_role` ni la contraseña de un proyecto borrado. |
+| `P1000` con corchetes | Se copió el placeholder `[YOUR-PASSWORD]` | Quita los `[]` |
+| `P1001 Can't reach server` | Host Direct sin IPv4, o pooler de otra región (`aws-1-…` si el proyecto está en `aws-0-…`) | Usa el host que muestra el dashboard en Session pooler, puerto `5432` |
+| Prisma ignora el `.env` de la raíz | Solo editaste la raíz | `cp .env apps/api/.env` |
+| Nest: falta `JWT_SECRET` | `apps/api/.env` no trae el secreto (Prisma no lo usa, Nest sí) | Copia también `JWT_SECRET` o `JWT_KEYS` al `.env` de `apps/api` |
+
+### Comprobado el 2026-10-22 (MinimalShop_API / Monica_BK)
+
+- Pooler correcto: `aws-0-us-east-1.pooler.supabase.com:5432` (`aws-1-…` no resuelve para este proyecto).
+- Tras alinear la **Database password** en ambos `.env`: `prisma migrate deploy` aplicó las 3 migraciones y `prisma db seed` creó los usuarios demo.
+- Si vuelve un `P1000` con URI bien formada, es casi siempre password desfasada: reset en el dashboard y volver a pegar.
 
 ## Notas
 
-- **Redis** no viene con Supabase: sigue siendo obligatorio para notificaciones (BullMQ). Local con `brew services start redis` o un Redis gestionado (Upstash, etc.).
-- **Auth**: esta API usa JWT propio (`/auth/login`), no Supabase Auth.
-- **RLS**: las migraciones ya habilitan RLS básico; Prisma conecta como owner y no se ve afectado en el flujo normal de la API.
+- **Redis** sigue siendo obligatorio (BullMQ y throttling). Local: `docker compose up -d redis` o un Redis gestionado.
+- **RLS:** las migraciones lo habilitan y revocan `anon` / `authenticated`. Prisma conecta como owner y no queda filtrado por esas políticas.
+- El aviso de Prisma 7 sobre `package.json#prisma` es deprecación del seed; no bloquea `migrate deploy`.

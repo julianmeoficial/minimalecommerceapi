@@ -32,7 +32,7 @@ Resumen de lo que ya validamos en desarrollo:
 1. Copia `.env` a `apps/api/.env` — Prisma solo lee el de `apps/api`.
 2. Usa la connection string del **Session pooler** (`pooler.supabase.com:5432`), no la Direct ni Transaction (`6543`).
 3. Pega la contraseña de **Settings → Database** sin los corchetes `[...]` del placeholder.
-4. Ejecuta `prisma migrate deploy`, `prisma db seed` (opcional) y comprueba `GET /api/v1/health`.
+4. Ejecuta `prisma migrate deploy`, `prisma db seed` (opcional) y comprueba `GET /api/salud/listo` (Postgres + Redis). `GET /api/salud/vida` solo confirma que el proceso responde.
 5. Redis sigue siendo necesario en local (`REDIS_URL`) para BullMQ; Supabase no lo incluye.
 
 Si ves `P1000 Authentication failed`, revisa la tabla de errores en `docs/08-SUPABASE.md`.
