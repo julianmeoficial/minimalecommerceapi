@@ -33,10 +33,10 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 
-- Railway: se quita `startCommand` de `railway.toml`. Con Dockerfile, Railway lanza el
-  start en forma exec sin shell; un `&&` hacía que solo corriera Prisma (exit 0) y Nest
-  nunca escuchara (502). El CMD del Dockerfile con `sh -c` es el que debe usarse; el
-  Custom Start Command del dashboard debe quedar vacío.
+- Railway: `startCommand` en `railway.toml` usa `sh -c 'npx prisma migrate deploy &&
+  node dist/src/main.js'` (forma exec-safe). Un `&&` suelto hacía que solo corriera
+  Prisma (exit 0) y Nest nunca escuchara (502). El CMD del Dockerfile es equivalente;
+  el Custom Start Command del dashboard debe quedar vacío o con esa misma línea `sh -c`.
 - Railway: el proceso arranca con `node dist/src/main.js` (salida real de Nest con
   `module: nodenext`). Antes se invocaba `dist/main.js` (inexistente).
 - Railway: `prisma` pasa a `dependencies` y el stage `runner` del Dockerfile hace

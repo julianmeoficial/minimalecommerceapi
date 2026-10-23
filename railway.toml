@@ -3,10 +3,11 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Sin startCommand: Railway ejecuta el start command en forma exec (sin shell),
-# así que `&&` llega como argumento a prisma y Nest nunca arranca.
-# El CMD del Dockerfile ya usa `sh -c "npx prisma migrate deploy && node dist/src/main.js"`.
-# Deja también vacío el Custom Start Command del dashboard.
+# Forma exec (sin shell): el primer token es el binario. Por eso usamos `sh -c '…&&…'`
+# y no un `&&` suelto (Prisma recibía el && como argumento, migraba y Nest no arrancaba).
+# El CMD del Dockerfile es equivalente. Custom Start Command del dashboard: vacío
+# o exactamente esta misma línea (si pones solo `npx … && node …`, vuelve el 502).
+startCommand = "sh -c 'npx prisma migrate deploy && node dist/src/main.js'"
 healthcheckPath = "/api/salud/vida"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"

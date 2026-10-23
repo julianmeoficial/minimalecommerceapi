@@ -31,5 +31,7 @@ RUN npm install --omit=dev \
   && chown -R app:app /app
 USER app
 EXPOSE 8080
-# Nest (module nodenext) emite dist/src/main.js, no dist/main.js
+# Nest (module nodenext) emite dist/src/main.js, no dist/main.js.
+# sh -c es obligatorio: Railway (Dockerfile) lanza el start en exec sin shell.
+ENV RAILWAY_BOOT_REV=18
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
