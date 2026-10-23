@@ -21,7 +21,12 @@ export interface EventoWebhook {
   providerEventId: string;
 }
 
-/** Puerto de pasarela de pagos (Stripe o simulador local). */
+/**
+ * Puerto de pasarela. Adaptadores:
+ * - `mock` — simulador universitario (activo ahora, también en production)
+ * - `stripe` — opcional
+ * - `wompi` — futuro (Colombia); aún no hay clase ni valor en Joi
+ */
 export abstract class PasarelaPagos {
   abstract crearIntento(entrada: CrearIntentoEntrada): Promise<IntentoPago>;
   abstract consultarIntento(externalId: string): Promise<IntentoPago>;

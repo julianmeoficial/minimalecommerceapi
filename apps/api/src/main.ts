@@ -24,7 +24,7 @@ async function bootstrap() {
   const isProduction = config.get<string>('NODE_ENV') === 'production';
   const port = Number(config.get('PORT') ?? 8080);
   const protocol = httpsOptions ? 'https' : 'http';
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   logger.log(`API MinimalShop en :${port} (${protocol.toUpperCase()})`);
   if (config.get<boolean>('SWAGGER_ENABLED')) {
     logger.log(`Swagger UI: ${protocol}://localhost:${port}/docs`);

@@ -25,7 +25,8 @@ import { WebhookPagosController } from './exposicion/webhook-pagos.controller';
       provide: PasarelaPagos,
       inject: [ConfigService, SimuladaPasarela, StripePasarela],
       useFactory: (config: ConfigService, mock: SimuladaPasarela, stripe: StripePasarela) => {
-        const base = config.get<string>('PAYMENT_PROVIDER') === 'stripe' ? stripe : mock;
+        const proveedor = config.get<string>('PAYMENT_PROVIDER') ?? 'mock';
+        const base = seleccionarPasarela(proveedor, mock, stripe);
         return new PasarelaResiliente(base, config);
       },
     },
@@ -34,3 +35,18 @@ import { WebhookPagosController } from './exposicion/webhook-pagos.controller';
   exports: [CobrosService],
 })
 export class PagosModule {}
+
+/** CobrosService solo depende de PasarelaPagos. Wompi: nuevo case + clase, sin tocar el servicio. */
+function seleccionarPasarela(
+  proveedor: string,
+  mock: SimuladaPasarela,
+  stripe: StripePasarela,
+): SimuladaPasarela | StripePasarela {
+  switch (proveedor) {
+    case 'stripe':
+      return stripe;
+    case 'mock':
+    default:
+      return mock;
+  }
+}

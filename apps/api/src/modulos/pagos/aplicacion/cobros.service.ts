@@ -79,6 +79,8 @@ export class CobrosService {
 
   async procesarWebhook(cuerpo: Buffer, firma: string | undefined) {
     const evento = await this.pasarela.verificarWebhook(cuerpo, firma);
+    // Hoy el único webhook cableado es Stripe. Al integrar Wompi, el proveedor
+    // debe salir del evento (no quedar fijo en 'stripe'). Ver docs/10-PAGOS-PASARELA.md.
     await this.aplicarEventoProveedor('stripe', evento);
     return { recibido: true };
   }

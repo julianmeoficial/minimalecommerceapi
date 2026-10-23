@@ -2,7 +2,9 @@
 
 Backend REST de un marketplace (comprador / vendedor / superadmin). **Sin frontend**: solo la API, el esquema y el contrato HTTP.
 
-**Stack:** NestJS · TypeScript · Prisma · PostgreSQL (local, Docker o Supabase) · Redis / BullMQ · JWT + Argon2 · Stripe (sandbox)
+**Stack:** NestJS · TypeScript · Prisma · PostgreSQL (local, Docker o Supabase) · Redis / BullMQ · JWT + Argon2 · pagos `mock` (simulador) o Stripe
+
+Despliegue previsto: Railway + Postgres en Supabase. Preparación en el repo: [docs/11-RAILWAY.md](docs/11-RAILWAY.md). Pasarela: [docs/10-PAGOS-PASARELA.md](docs/10-PAGOS-PASARELA.md).
 
 Postgres por defecto del Compose y de CI es **local**. Supabase es el Postgres remoto opcional (hoy el proyecto `MinimalShop_API` en la cuenta Monica_BK). Ver [docs/08-SUPABASE.md](docs/08-SUPABASE.md) y [docs/BALANCE-OPERATIVO.md](docs/BALANCE-OPERATIVO.md).
 
@@ -90,6 +92,8 @@ Los e2e cubren auth, checkout con cupón, stock insuficiente, cupón inválido, 
 
 - [docs/README.md](docs/README.md) — índice
 - [docs/08-SUPABASE.md](docs/08-SUPABASE.md) — conectar Postgres/Storage en Supabase
+- [docs/11-RAILWAY.md](docs/11-RAILWAY.md) — checklist de despliegue (manual)
+- [docs/10-PAGOS-PASARELA.md](docs/10-PAGOS-PASARELA.md) — simulador y extensión Wompi
 - [CHANGELOG.md](CHANGELOG.md) — historial de cambios
 - [CONTRIBUTING.md](CONTRIBUTING.md) — cómo contribuir
 

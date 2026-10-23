@@ -20,6 +20,8 @@ Documentación operativa del backend actual (NestJS). Empieza por el [README de 
 | [08 — Supabase](08-SUPABASE.md) | Conectar Postgres/Storage de Supabase |
 | [BALANCE-OPERATIVO.md](BALANCE-OPERATIVO.md) | Cómo funciona la API y quién hospeda la base |
 | [09 — Testeo de seguridad](09-TESTEO-SEGURIDAD.md) | Auditoría defensiva, hallazgos y cómo re-ejecutar tests |
+| [10 — Pasarela de pagos](10-PAGOS-PASARELA.md) | Puerto `PasarelaPagos`, simulador y Wompi futuro |
+| [11 — Railway](11-RAILWAY.md) | Checklist para desplegar el Dockerfile a mano |
 
 [00-ESTADO-OBSOLETO.md](00-ESTADO-OBSOLETO.md) solo redirige al archivo histórico Spring. No es documentación operativa.
 

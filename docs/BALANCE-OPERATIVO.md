@@ -2,7 +2,7 @@
 
 Fecha: **2026-10-22**. Rama: `chore/supabase-monica-handoff`. Contrato HTTP: [05-CONTRATO-API.md](05-CONTRATO-API.md). Conexión: [08-SUPABASE.md](08-SUPABASE.md).
 
-## Cómo está armada
+## ¿Cómo está armada?
 
 Monolito NestJS 11. Un proceso, varios módulos (`usuarios`, `catalogo`, `inventario`, `carrito`, `pedidos`, `pagos`, `notificaciones`, `reportes`, `complementarios`, `resenas`). Prefijo `/api`, versión `v1`. OpenAPI en `/docs`.
 
@@ -16,13 +16,13 @@ flowchart LR
   API --> Media["disco local o Storage"]
 ```
 
-| Pieza | Dónde vive | Qué no es |
-|---|---|---|
-| Datos de negocio | Postgres (Prisma) | No es Supabase Auth |
-| Sesión | JWT HS256 + refresh en tabla `refresh_tokens` | No usa la anon key |
-| Colas y rate limit | Redis (`REDIS_URL`) | Supabase no lo incluye |
-| Imágenes | `MEDIA_DRIVER=local` (disco) | Storage solo si se pone `supabase` |
-| Pagos | `PAYMENT_PROVIDER=mock` o Stripe | El cliente no confirma el pago |
+| Pieza              | ¿Dónde vive?                                  | ¿Qué no es?                                                |
+| ------------------ | --------------------------------------------- | ---------------------------------------------------------- |
+| Datos de negocio   | Postgres (Prisma)                             | No es Supabase Auth                                        |
+| Sesión             | JWT HS256 + refresh en tabla `refresh_tokens` | No usa la anon key                                         |
+| Colas y rate limit | Redis (`REDIS_URL`)                           | Supabase no lo incluye                                     |
+| Imágenes           | `MEDIA_DRIVER=local` (disco)                  | Storage solo si se pone `supabase`                         |
+| Pagos              | `PAYMENT_PROVIDER=mock` (simulador) o Stripe  | El cliente no confirma el pago. Wompi no está implementado |
 
 Prisma conecta como **owner**. Las políticas RLS no filtran al backend. La migración `fase5_hardening` quita políticas abiertas y revoca `anon` / `authenticated` para que PostgREST no lea las tablas con la clave pública.
 
@@ -36,7 +36,7 @@ Prisma conecta como **owner**. Las políticas RLS no filtran al backend. La migr
 2. `POST /api/v1/carrito/items`
 3. `POST /api/v1/pedidos` con cabecera `Idempotency-Key` (reserva de stock ~15 min, vacía el carrito)
 4. `POST /api/v1/pagos/pedidos/:id/intento`
-5. Cierre: webhook de Stripe o, en mock, `POST /api/v1/pagos/simulador/pedidos/:id/aprobar` (solo superadmin, fuera de producción)
+5. Cierre: webhook de Stripe o, con `mock`, `POST /api/v1/pagos/simulador/pedidos/:id/aprobar` (superadmin; también en production)
 6. El vendedor avanza `PATCH /api/v1/vendedor/pedidos/:id/estado`
 
 Estados: `CREADO` → `PENDIENTE_PAGO` → `PAGADO` → `EN_PREPARACION` → `ENVIADO` → `ENTREGADO` (también `CANCELADO` y `REEMBOLSADO`).
@@ -50,15 +50,15 @@ Seed de desarrollo (password `demo12345`): `comprador@demo.com`, `vendedor@demo.
 | `GET /api/salud/vida` | El proceso responde |
 | `GET /api/salud/listo` | Postgres y Redis responden |
 
-## Quién hospeda la base
+## ¿Quién hospeda la base?
 
-| | |
-|---|---|
-| Cuenta | Monica_BK |
-| Proyecto | MinimalShop_API |
-| Ref | `rbgidchvwvadwxuidsxj` |
-| Región | `us-east-1` (East US / North Virginia) |
-| Motivo | La cuenta anterior llegó al límite de proyectos activos del plan Free |
+|            |                                                                       |
+| ---------- | --------------------------------------------------------------------- |
+| **Cuenta** | **Monica_BK**                                                         |
+| Proyecto   | MinimalShop_API                                                       |
+| Ref        | `rbgidchvwvadwxuidsxj`                                                |
+| Región     | `us-east-1` (East US / North Virginia)                                |
+| Motivo     | La cuenta anterior llegó al límite de proyectos activos del plan Free |
 
 El proyecto viejo se eliminó. No había dump que restaurar: el esquema se recreó con Prisma. Los secretos de JWT, Redis, Stripe y SMTP no viajan con la cuenta de Supabase. `.env` no se versiona: cada desarrollador apunta su `DATABASE_URL` al Session pooler de este proyecto.
 
@@ -81,8 +81,8 @@ Contra Postgres local `minimalshop_e2e` y Redis en `127.0.0.1` (sin tocar Monica
 - `GET /api/salud/vida` y `GET /api/salud/listo`: 200.
 - Ingreso demo: 200, rol `COMPRADOR`.
 
-## Qué queda fuera
+## ¿Qué queda fuera?
 
 - Copiar objetos de Storage (hoy el driver es local).
-- Desplegar el proceso Nest a un host de producción: solo hay que apuntar `DATABASE_URL` y `REDIS_URL`.
+- El alta del servicio en Railway es manual. El repo ya trae [`railway.toml`](../railway.toml) y [11-RAILWAY.md](11-RAILWAY.md).
 - El e2e `security.e2e-spec.ts` no entra en `pnpm test:e2e` (el regex de Jest solo corre `fase5.e2e-spec.ts`) y sigue citando rutas en inglés.

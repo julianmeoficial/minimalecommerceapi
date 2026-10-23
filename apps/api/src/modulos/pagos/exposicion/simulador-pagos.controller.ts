@@ -5,7 +5,7 @@ import { UserRole } from '@prisma/client';
 import { Roles } from '../../../compartido/auth/decoradores';
 import { CobrosService } from '../aplicacion/cobros.service';
 
-/** Solo disponible con PAYMENT_PROVIDER=mock y fuera de producción. */
+/** Activo con PAYMENT_PROVIDER=mock, también en production (entorno universitario). */
 @ApiTags('pagos / simulador')
 @ApiBearerAuth()
 @Roles(UserRole.SUPERADMIN)
@@ -17,7 +17,7 @@ export class SimuladorPagosController {
     private readonly cobros: CobrosService,
     config: ConfigService,
   ) {
-    this.activo = config.get<string>('PAYMENT_PROVIDER') === 'mock' && config.get<string>('NODE_ENV') !== 'production';
+    this.activo = config.get<string>('PAYMENT_PROVIDER') === 'mock';
   }
 
   @Post(':id/aprobar')
