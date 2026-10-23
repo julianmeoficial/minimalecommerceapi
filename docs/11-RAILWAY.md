@@ -21,8 +21,12 @@ Con imagen **Dockerfile**, Railway ejecuta el Custom Start Command / `startComma
 Si pones `npx prisma migrate deploy && node dist/src/main.js`, el `&&` llega como
 argumento a Prisma: migra, sale 0 y **Nest nunca arranca** (502, logs solo de migrate).
 
-Por eso [`railway.toml`](../railway.toml) **no** define `startCommand`. Se usa el `CMD`
-del [`Dockerfile`](../Dockerfile), que sí envuelve en shell:
+Arranque correcto (CMD del [`Dockerfile`](../Dockerfile) y `startCommand` de
+[`railway.toml`](../railway.toml)): el binario es `sh` y el script va en `-c`:
+
+```bash
+sh -c 'npx prisma migrate deploy && node dist/src/main.js'
+```
 
 ```dockerfile
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
@@ -30,14 +34,14 @@ CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
 
 El entrypoint es `dist/src/main.js` (Nest con `module: nodenext`), no `dist/main.js`.
 
-**Dashboard (imprescindible):** Settings → Deploy → **Custom Start Command = vacío**.
-Si queda un comando con `&&`, `pnpm` o `dist/main.js`, pisa el CMD y vuelves al 502.
-No uses `pnpm` ni `nest start` en producción.
+**Dashboard:** Settings → Deploy → Custom Start Command **vacío** (recomendado) o
+exactamente la línea `sh -c '…'` de arriba. Si queda `npx … && node …` sin `sh -c`,
+o `pnpm` / `dist/main.js`, pisa el CMD y vuelves al 502.
 
 ## Checklist
 
 1. En Railway, servicio desde este repo. Builder: Dockerfile (`railway.toml`).
-2. Custom Start Command del dashboard: **vacío** (usa el CMD del Dockerfile).
+2. Custom Start Command: vacío o `sh -c 'npx prisma migrate deploy && node dist/src/main.js'`.
 3. Añade un Redis (plugin de Railway o Upstash) → `REDIS_URL` interna (`*.railway.internal`).
 4. Pega las variables de la tabla. No subas `.env` al repositorio.
 5. Deploy. Healthcheck: `GET /api/salud/vida` → debe loguear `API MinimalShop en :…`.
