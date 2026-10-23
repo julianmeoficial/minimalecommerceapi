@@ -3,9 +3,10 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# La imagen final no incluye pnpm: no uses `pnpm --filter api start` en el dashboard.
-# Este comando coincide con el CMD del Dockerfile.
-startCommand = "npx prisma migrate deploy && node dist/src/main.js"
+# Sin startCommand: Railway ejecuta el start command en forma exec (sin shell),
+# así que `&&` llega como argumento a prisma y Nest nunca arranca.
+# El CMD del Dockerfile ya usa `sh -c "npx prisma migrate deploy && node dist/src/main.js"`.
+# Deja también vacío el Custom Start Command del dashboard.
 healthcheckPath = "/api/salud/vida"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
