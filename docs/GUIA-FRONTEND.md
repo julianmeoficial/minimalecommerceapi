@@ -103,7 +103,7 @@ Si un módulo está desactivado (`GET /api/v1/admin/modulos` para superadmin), l
 2. **No** existe endpoint de confirmación del cliente; el estado final llega por webhook o simulador.
 3. `GET /api/v1/pagos/pedidos/:pedidoId` para polling de `estado` (`PENDING` | `SUCCEEDED` | …).
 
-**Desarrollo con mock:** superadmin → `POST /api/v1/pagos/simulador/pedidos/:id/aprobar`.
+**Mock (también en production):** superadmin → `POST /api/v1/pagos/simulador/pedidos/:id/aprobar`.
 
 ### Seguimiento pedido (CU-05 / CU-09)
 

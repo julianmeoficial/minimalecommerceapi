@@ -14,6 +14,7 @@ export class WebhookPagosController {
   constructor(private readonly cobros: CobrosService) {}
 
   @Post()
+  // Firma actual: cabecera de Stripe. Wompi usará la suya cuando exista el adaptador.
   webhook(@Req() req: RawBodyRequest<Request>, @Headers('stripe-signature') firma?: string) {
     const cuerpo = req.rawBody ?? Buffer.from('');
     return this.cobros.procesarWebhook(cuerpo, firma);

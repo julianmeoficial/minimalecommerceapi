@@ -12,7 +12,7 @@ Monolito NestJS 11 modular en español (`compartido/` + `modulos/`). Prefijo HTT
 | Carrito | Resumen con precios vigentes, ítems CRUD | Solo `COMPRADOR` |
 | Checkout | Pedido `CREADO`, reserva de stock 15 min, vaciado de carrito | Cabecera obligatoria `Idempotency-Key` |
 | Cupones | Validación en checkout; CRUD vendedor; consulta pública limitada | Módulo `cupones` activable |
-| Pagos | Intento de pago, consulta estado, webhook Stripe, **simulador mock** | Sin `confirm` del cliente; mock: `POST .../pagos/simulador/pedidos/:id/aprobar` |
+| Pagos | Intento de pago, consulta estado, webhook Stripe, **simulador mock** | Sin `confirm` del cliente. Con `mock`, el simulador SUPERADMIN sigue activo en production. Wompi: [10-PAGOS-PASARELA.md](10-PAGOS-PASARELA.md) |
 | Pedidos | Historial comprador, detalle, cancelar, confirmar recibido | Máquina de estados TCC 8.4 |
 | Vendedor pedidos | Listado paginado, cambio de estado post-pago | CU-09 cubierto en e2e |
 | Módulos | Flags globales (`cupones`, `resenas`, `favoritos`, `contenido`, `notificaciones`) | 409 `MODULE_DISABLED` |
@@ -39,7 +39,7 @@ sequenceDiagram
   F->>API: GET /pedidos/:id
 ```
 
-En **mock** (desarrollo), un superadmin puede llamar al simulador para cerrar el flujo sin Stripe.
+Con `PAYMENT_PROVIDER=mock`, un superadmin cierra el pago en el simulador (`.../aprobar` o `.../rechazar`), también si `NODE_ENV=production`. Wompi queda como adaptador futuro del mismo puerto.
 
 ## Limitaciones conocidas
 

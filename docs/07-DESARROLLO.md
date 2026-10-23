@@ -26,7 +26,7 @@ Copia `.env.example` → `.env` (nunca commitear secretos).
 | `JWT_SECRET` | sí | ≥ 32 caracteres en prod |
 | `JWT_ACCESS_TTL` / `JWT_REFRESH_TTL_DIAS` | no | Access 15m, refresh 7d |
 | `SWAGGER_ENABLED` | no | `true` en dev |
-| `PAYMENT_PROVIDER` | no | `mock` \| `stripe` |
+| `PAYMENT_PROVIDER` | no | `mock` (simulador, también en production) \| `stripe`. Wompi no está cableado |
 | `REDIS_URL` | sí* | BullMQ (`redis://localhost:6379`) |
 | `PORT` | no | Default `8080` |
 | `CORS_ORIGINS` | no | Lista separada por comas |

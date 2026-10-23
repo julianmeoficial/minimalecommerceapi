@@ -54,18 +54,27 @@ CORS_ORIGINS=http://localhost:3000
 SWAGGER_ENABLED=true
 PAYMENT_PROVIDER=mock
 
-MEDIA_DRIVER=local
+MEDIA_DRIVER=supabase
 UPLOAD_DIR=../../.data/uploads
 SUPABASE_URL=https://rbgidchvwvadwxuidsxj.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...   # service_role; basta para Storage (no hace falta otro token)
 SUPABASE_STORAGE_BUCKET=product-images
+MEDIA_URL_TTL_SEGUNDOS=3600
 ```
 
 Si la contraseña contiene `@`, `#`, `%`, `&` u otros caracteres reservados en una URL, codifica **solo** ese segmento con `encodeURIComponent`.
 
 `JWT_SECRET`, `REDIS_URL`, Stripe, SMTP y CORS **no** cambian al mover el proyecto de Supabase.
 
-Para subir imágenes a Storage: crea el bucket `product-images` y pon `MEDIA_DRIVER=supabase`. Con `local`, las fotos quedan en disco y no dependen de este proyecto.
+## Storage (imágenes de producto)
+
+Con lo que ya tienes en `.env` alcanza: **no** hace falta anon key ni un token aparte. El backend usa `SUPABASE_SERVICE_ROLE_KEY` para subir, borrar y firmar URLs.
+
+1. Bucket privado `product-images` (o el nombre de `SUPABASE_STORAGE_BUCKET`) en Storage del dashboard, o créalo por API con la service_role.
+2. `MEDIA_DRIVER=supabase` en la raíz y en `apps/api/.env`.
+3. Reinicia la API. Las lecturas son URLs firmadas (`MEDIA_URL_TTL_SEGUNDOS`, default 3600).
+
+Con `MEDIA_DRIVER=local`, las fotos van a disco y no usan el bucket. En Railway usa siempre `supabase`.
 
 ## Aplicar el esquema
 

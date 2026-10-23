@@ -85,8 +85,8 @@ flowchart TB
 |--------|------|------|-------|
 | POST | `/v1/pagos/pedidos/:id/intento` | COMPRADOR | Crea intento; sin confirm cliente |
 | GET | `/v1/pagos/pedidos/:id` | JWT | Estado del pago |
-| POST | `/v1/pagos/webhook` | público | Cuerpo crudo Stripe |
-| POST | `/v1/pagos/simulador/pedidos/:id/aprobar` | SUPERADMIN | Solo `mock` + no producción |
+| POST | `/v1/pagos/webhook` | público | Cuerpo crudo; hoy firma `stripe-signature` |
+| POST | `/v1/pagos/simulador/pedidos/:id/aprobar` | SUPERADMIN | Solo `PAYMENT_PROVIDER=mock` (también en production) |
 | POST | `/v1/pagos/simulador/pedidos/:id/rechazar` | SUPERADMIN | Idem |
 
 ### Complementos y ops

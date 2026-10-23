@@ -8,6 +8,10 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
+- Preparación de Railway: `railway.toml`, healthcheck `/api/salud/vida` y guía
+  `docs/11-RAILWAY.md` (el deploy sigue siendo manual).
+- Arquitectura de pagos (`docs/10-PAGOS-PASARELA.md`): puerto `PasarelaPagos`, simulador
+  universitario y punto de extensión para Wompi (sin implementarlo).
 - Balance operativo (`docs/BALANCE-OPERATIVO.md`): stack, flujo de compra y ownership de Postgres
   en Monica_BK (`MinimalShop_API`).
 - Guía operativa de Supabase (`docs/08-SUPABASE.md`): variables de entorno, migraciones Prisma,
@@ -19,6 +23,8 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 
+- El simulador de pagos queda activo con `PAYMENT_PROVIDER=mock` aunque `NODE_ENV=production`.
+- La API escucha en `0.0.0.0` para el proxy de Railway.
 - Documentación alineada al contrato en español: README, salud `/api/salud/*`, módulos
   `compartido/` + `modulos/`, y archivo del texto Spring en `docs/archivo/00-ESTADO-OBSOLETO.md`.
 - Postgres remoto de desarrollo: proyecto **MinimalShop_API** en org **Monica_BK**
