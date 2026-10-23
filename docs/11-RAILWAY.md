@@ -10,7 +10,7 @@ flowchart LR
   API --> Storage["Supabase Storage"]
 ```
 
-La API escucha `PORT` en `0.0.0.0`. Al arrancar el contenedor corre `prisma migrate deploy` y luego `node dist/main.js`. Railway termina TLS; no uses `pnpm certs:dev` ahí.
+La API escucha `PORT` en `0.0.0.0`. Al arrancar el contenedor corre `prisma migrate deploy` y luego `node dist/src/main.js`. Railway termina TLS; no uses `pnpm certs:dev` ahí.
 
 El stage `runner` del Dockerfile reinstala las `dependencies` con `npm` (incluye el **CLI de Prisma**) y genera el client. Así `npx prisma migrate deploy` no falla con `Cannot find module '.../prisma/build/index.js'`. Solo `@prisma/client` no alcanza: hace falta el paquete `prisma` en `dependencies`.
 
@@ -19,8 +19,10 @@ El stage `runner` del Dockerfile reinstala las `dependencies` con `npm` (incluye
 La imagen de producción **no tiene pnpm** (el runtime ya está empaquetado). El `CMD` del [`Dockerfile`](../Dockerfile) y el `startCommand` de [`railway.toml`](../railway.toml) son:
 
 ```bash
-npx prisma migrate deploy && node dist/main.js
+npx prisma migrate deploy && node dist/src/main.js
 ```
+
+El entrypoint es `dist/src/main.js` (Nest con `module: nodenext`), no `dist/main.js`. Si usas la ruta corta, Prisma migra bien y luego el proceso sale al instante: en logs solo ves migrate en bucle y Railway responde 502.
 
 Si en el dashboard (Settings → Deploy → Custom Start Command) queda `pnpm --filter api start`, Railway **sustituye** el CMD de la imagen y el deploy falla con `The executable pnpm could not be found`.
 
@@ -29,7 +31,7 @@ Si en el dashboard (Settings → Deploy → Custom Start Command) queda `pnpm --
 ## Checklist
 
 1. En Railway, servicio desde este repo. Builder: Dockerfile (`railway.toml`).
-2. Start command: vacío o `npx prisma migrate deploy && node dist/main.js` (nunca `pnpm ...`).
+2. Start command: vacío o `npx prisma migrate deploy && node dist/src/main.js` (nunca `pnpm ...`).
 3. Añade un Redis (plugin de Railway o Upstash) → `REDIS_URL`.
 4. Pega las variables de la tabla. No subas `.env` al repositorio.
 5. Deploy. Healthcheck: `GET /api/salud/vida`.

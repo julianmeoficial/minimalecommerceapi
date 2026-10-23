@@ -33,13 +33,16 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 
+- Railway: el proceso arranca con `node dist/src/main.js` (salida real de Nest con
+  `module: nodenext`). Antes se invocaba `dist/main.js` (inexistente): migrate OK y
+  luego crash silencioso / 502 en bucle.
 - Railway: `prisma` pasa a `dependencies` y el stage `runner` del Dockerfile hace
   `npm install --omit=dev` + `prisma generate`, para que `npx prisma migrate deploy`
   no falle con `Cannot find module '.../prisma/build/index.js'` (los symlinks de pnpm
   no se podían copiar solos a la imagen final).
-- Railway: `startCommand` en `railway.toml` alineado al `CMD` del Dockerfile
-  (`npx prisma migrate deploy && node dist/main.js`). Un Custom Start Command con
-  `pnpm --filter api start` falla porque la imagen final no incluye pnpm.
+- Railway: `startCommand` en `railway.toml` alineado al `CMD` del Dockerfile.
+  Un Custom Start Command con `pnpm --filter api start` falla porque la imagen final
+  no incluye pnpm.
 - Conexión a PostgreSQL en Supabase (handoff Monica_BK):
   - **Causa del `P1000`:** contraseña de Database incorrecta (el formato Session pooler
     `postgres.<ref>@aws-0-<region>.pooler.supabase.com:5432` ya era válido). También puede
