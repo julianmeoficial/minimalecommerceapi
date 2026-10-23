@@ -12,9 +12,11 @@ flowchart LR
 
 La API escucha `PORT` en `0.0.0.0`. Al arrancar el contenedor corre `prisma migrate deploy` y luego `node dist/main.js`. Railway termina TLS; no uses `pnpm certs:dev` ahí.
 
+El stage `runner` del Dockerfile reinstala las `dependencies` con `npm` (incluye el **CLI de Prisma**) y genera el client. Así `npx prisma migrate deploy` no falla con `Cannot find module '.../prisma/build/index.js'`. Solo `@prisma/client` no alcanza: hace falta el paquete `prisma` en `dependencies`.
+
 ## Start command (crítico)
 
-La imagen de producción **no tiene pnpm**. El `CMD` del [`Dockerfile`](../Dockerfile) y el `startCommand` de [`railway.toml`](../railway.toml) son:
+La imagen de producción **no tiene pnpm** (el runtime ya está empaquetado). El `CMD` del [`Dockerfile`](../Dockerfile) y el `startCommand` de [`railway.toml`](../railway.toml) son:
 
 ```bash
 npx prisma migrate deploy && node dist/main.js
