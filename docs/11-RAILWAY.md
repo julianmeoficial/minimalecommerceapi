@@ -12,14 +12,27 @@ flowchart LR
 
 La API escucha `PORT` en `0.0.0.0`. Al arrancar el contenedor corre `prisma migrate deploy` y luego `node dist/main.js`. Railway termina TLS; no uses `pnpm certs:dev` ahí.
 
+## Start command (crítico)
+
+La imagen de producción **no tiene pnpm**. El `CMD` del [`Dockerfile`](../Dockerfile) y el `startCommand` de [`railway.toml`](../railway.toml) son:
+
+```bash
+npx prisma migrate deploy && node dist/main.js
+```
+
+Si en el dashboard (Settings → Deploy → Custom Start Command) queda `pnpm --filter api start`, Railway **sustituye** el CMD de la imagen y el deploy falla con `The executable pnpm could not be found`.
+
+**Qué hacer en el dashboard:** bórralo (vacío, para usar Dockerfile/`railway.toml`) o pon exactamente el comando de arriba. No uses `pnpm` ni `nest start` en producción.
+
 ## Checklist
 
-1. En Railway, nuevo servicio desde este repo. Builder: Dockerfile (lo fija `railway.toml`).
-2. Añade un Redis (plugin de Railway o Upstash) y copia su URL a `REDIS_URL`.
-3. Pega las variables de la tabla. No subas `.env` al repositorio.
-4. Deploy. El healthcheck del proceso es `GET /api/salud/vida`.
-5. Cuando Redis y Postgres respondan: `GET https://<tu-dominio>/api/salud/listo` debe decir que ambos están `up`.
-6. Humo: `POST /api/v1/auth/ingreso` con un usuario del seed y, con el token de `admin@demo.com`, el simulador de un pedido de prueba.
+1. En Railway, servicio desde este repo. Builder: Dockerfile (`railway.toml`).
+2. Start command: vacío o `npx prisma migrate deploy && node dist/main.js` (nunca `pnpm ...`).
+3. Añade un Redis (plugin de Railway o Upstash) → `REDIS_URL`.
+4. Pega las variables de la tabla. No subas `.env` al repositorio.
+5. Deploy. Healthcheck: `GET /api/salud/vida`.
+6. Cuando Redis y Postgres respondan: `GET https://<tu-dominio>/api/salud/listo`.
+7. Humo: `POST /api/v1/auth/ingreso` y, con `admin@demo.com`, el simulador de un pedido.
 
 ## Variables
 
