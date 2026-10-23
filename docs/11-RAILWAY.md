@@ -16,25 +16,31 @@ El stage `runner` del Dockerfile reinstala las `dependencies` con `npm` (incluye
 
 ## Start command (crítico)
 
-La imagen de producción **no tiene pnpm** (el runtime ya está empaquetado). El `CMD` del [`Dockerfile`](../Dockerfile) y el `startCommand` de [`railway.toml`](../railway.toml) son:
+Con imagen **Dockerfile**, Railway ejecuta el Custom Start Command / `startCommand` en
+[forma exec **sin shell**](https://docs.railway.com/deployments/start-command#configure-the-start-command).
+Si pones `npx prisma migrate deploy && node dist/src/main.js`, el `&&` llega como
+argumento a Prisma: migra, sale 0 y **Nest nunca arranca** (502, logs solo de migrate).
 
-```bash
-npx prisma migrate deploy && node dist/src/main.js
+Por eso [`railway.toml`](../railway.toml) **no** define `startCommand`. Se usa el `CMD`
+del [`Dockerfile`](../Dockerfile), que sí envuelve en shell:
+
+```dockerfile
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
 ```
 
-El entrypoint es `dist/src/main.js` (Nest con `module: nodenext`), no `dist/main.js`. Si usas la ruta corta, Prisma migra bien y luego el proceso sale al instante: en logs solo ves migrate en bucle y Railway responde 502.
+El entrypoint es `dist/src/main.js` (Nest con `module: nodenext`), no `dist/main.js`.
 
-Si en el dashboard (Settings → Deploy → Custom Start Command) queda `pnpm --filter api start`, Railway **sustituye** el CMD de la imagen y el deploy falla con `The executable pnpm could not be found`.
-
-**Qué hacer en el dashboard:** bórralo (vacío, para usar Dockerfile/`railway.toml`) o pon exactamente el comando de arriba. No uses `pnpm` ni `nest start` en producción.
+**Dashboard (imprescindible):** Settings → Deploy → **Custom Start Command = vacío**.
+Si queda un comando con `&&`, `pnpm` o `dist/main.js`, pisa el CMD y vuelves al 502.
+No uses `pnpm` ni `nest start` en producción.
 
 ## Checklist
 
 1. En Railway, servicio desde este repo. Builder: Dockerfile (`railway.toml`).
-2. Start command: vacío o `npx prisma migrate deploy && node dist/src/main.js` (nunca `pnpm ...`).
-3. Añade un Redis (plugin de Railway o Upstash) → `REDIS_URL`.
+2. Custom Start Command del dashboard: **vacío** (usa el CMD del Dockerfile).
+3. Añade un Redis (plugin de Railway o Upstash) → `REDIS_URL` interna (`*.railway.internal`).
 4. Pega las variables de la tabla. No subas `.env` al repositorio.
-5. Deploy. Healthcheck: `GET /api/salud/vida`.
+5. Deploy. Healthcheck: `GET /api/salud/vida` → debe loguear `API MinimalShop en :…`.
 6. Cuando Redis y Postgres respondan: `GET https://<tu-dominio>/api/salud/listo`.
 7. Humo: `POST /api/v1/auth/ingreso` y, con `admin@demo.com`, el simulador de un pedido.
 
