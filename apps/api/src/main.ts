@@ -36,4 +36,7 @@ async function bootstrap() {
   }
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Fallo al arrancar la API:', err);
+  process.exit(1);
+});

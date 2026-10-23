@@ -31,4 +31,5 @@ RUN npm install --omit=dev \
   && chown -R app:app /app
 USER app
 EXPOSE 8080
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Nest (module nodenext) emite dist/src/main.js, no dist/main.js
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
