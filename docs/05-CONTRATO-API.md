@@ -2,7 +2,8 @@
 
 - **Prefijo:** `/api`
 - **Versión:** URI `v1` → rutas de negocio `/api/v1/...`
-- **OpenAPI:** `/docs` (si `SWAGGER_ENABLED=true`)
+- **OpenAPI:** `/docs` y `/docs-json` (si `SWAGGER_ENABLED=true`) — ahí viven los schemas de request/response; este documento solo mapea rutas
+- **Producción:** `https://minimalshopapi.up.railway.app` (p. ej. [docs](https://minimalshopapi.up.railway.app/docs), [docs-json](https://minimalshopapi.up.railway.app/docs-json))
 - **Autenticación:** `Authorization: Bearer <accessToken>` salvo rutas `@Publico`
 - **Errores:** JSON con `code`, `message`, `details`, `timestamp`, `path`, `correlationId`
 - **Integración frontend:** ver [GUIA-FRONTEND.md](./GUIA-FRONTEND.md)

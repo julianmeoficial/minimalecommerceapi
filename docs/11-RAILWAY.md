@@ -17,7 +17,7 @@ El stage `runner` del Dockerfile reinstala las `dependencies` con `npm` (incluye
 ## Start command (crítico)
 
 Con imagen **Dockerfile**, Railway ejecuta el Custom Start Command / `startCommand` en
-[forma exec **sin shell**](https://docs.railway.com/deployments/start-command#configure-the-start-command).
+[forma exec **sin shell](https://docs.railway.com/deployments/start-command#configure-the-start-command)**.
 Si pones `npx prisma migrate deploy && node dist/src/main.js`, el `&&` llega como
 argumento a Prisma: migra, sale 0 y **Nest nunca arranca** (502, logs solo de migrate).
 
@@ -45,8 +45,10 @@ o `pnpm` / `dist/main.js`, pisa el CMD y vuelves al 502.
 3. Añade un Redis (plugin de Railway o Upstash) → `REDIS_URL` interna (`*.railway.internal`).
 4. Pega las variables de la tabla. No subas `.env` al repositorio.
 5. Deploy. Healthcheck: `GET /api/salud/vida` → debe loguear `API MinimalShop en :…`.
-6. Cuando Redis y Postgres respondan: `GET https://<tu-dominio>/api/salud/listo`.
+6. Cuando Redis y Postgres respondan: `GET https://minimalshopapi.up.railway.app/api/salud/listo` (dominio actual del servicio).
 7. Humo: `POST /api/v1/auth/ingreso` y, con `admin@demo.com`, el simulador de un pedido.
+
+**URL pública actual:** [https://minimalshopapi.up.railway.app/](https://minimalshopapi.up.railway.app/) — OpenAPI en `/docs`, integración FE en [GUIA-FRONTEND.md](./GUIA-FRONTEND.md).
 
 ## Variables
 
@@ -71,7 +73,7 @@ o `pnpm` / `dist/main.js`, pisa el CMD y vuelves al 502.
 
 El filesystem de Railway no persiste. No uses `MEDIA_DRIVER=local` en ese servicio: las fotos se pierden al redeploy. Con `supabase`, crea el bucket `product-images` en el proyecto de Mónica antes de subir imágenes.
 
-## Qué no hace este repo
+## ¿Qué no hace este repo?
 
 - No crea el proyecto en Railway ni ejecuta `railway up`.
 - No guarda la contraseña de Database ni el `service_role`.

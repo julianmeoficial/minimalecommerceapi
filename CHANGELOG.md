@@ -23,6 +23,10 @@ y el versionado [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 
+- Guía frontend (`docs/GUIA-FRONTEND.md`) actualizada con la URL de producción
+  Railway (`https://minimalshopapi.up.railway.app`), ejemplos `fetch`, CORS, seed demo,
+  tipado desde `/docs-json` y enlaces alineados en README, `05-CONTRATO-API.md` y
+  `11-RAILWAY.md`.
 - El simulador de pagos queda activo con `PAYMENT_PROVIDER=mock` aunque `NODE_ENV=production`.
 - La API escucha en `0.0.0.0` para el proxy de Railway.
 - Documentación alineada al contrato en español: README, salud `/api/salud/*`, módulos

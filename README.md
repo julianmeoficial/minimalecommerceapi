@@ -4,7 +4,7 @@ Backend REST de un marketplace (comprador / vendedor / superadmin). **Sin fronte
 
 **Stack:** NestJS · TypeScript · Prisma · PostgreSQL (local, Docker o Supabase) · Redis / BullMQ · JWT + Argon2 · pagos `mock` (simulador) o Stripe
 
-Despliegue previsto: Railway + Postgres en Supabase. Preparación en el repo: [docs/11-RAILWAY.md](docs/11-RAILWAY.md). Pasarela: [docs/10-PAGOS-PASARELA.md](docs/10-PAGOS-PASARELA.md).
+Despliegue en Railway + Postgres en Supabase. Producción: [https://minimalshopapi.up.railway.app/](https://minimalshopapi.up.railway.app/). Checklist: [docs/11-RAILWAY.md](docs/11-RAILWAY.md). Integración frontend: [docs/GUIA-FRONTEND.md](docs/GUIA-FRONTEND.md). Pasarela: [docs/10-PAGOS-PASARELA.md](docs/10-PAGOS-PASARELA.md).
 
 Postgres por defecto del Compose y de CI es **local**. Supabase es el Postgres remoto opcional (hoy el proyecto `MinimalShop_API` en la cuenta Monica_BK). Ver [docs/08-SUPABASE.md](docs/08-SUPABASE.md) y [docs/BALANCE-OPERATIVO.md](docs/BALANCE-OPERATIVO.md).
 
@@ -22,9 +22,12 @@ pnpm dev
 
 | Recurso | URL |
 |---|---|
-| API | https://localhost:8080/api/v1 (con `pnpm certs:dev`) |
-| OpenAPI | https://localhost:8080/docs |
-| Salud | https://localhost:8080/api/salud/vida y `/api/salud/listo` |
+| API (local, `pnpm certs:dev`) | https://localhost:8080/api/v1 |
+| OpenAPI (local) | https://localhost:8080/docs |
+| Salud (local) | https://localhost:8080/api/salud/vida y `/api/salud/listo` |
+| API (producción, Railway) | https://minimalshopapi.up.railway.app/api/v1 |
+| OpenAPI (producción) | https://minimalshopapi.up.railway.app/docs |
+| Salud (producción) | https://minimalshopapi.up.railway.app/api/salud/vida |
 
 **Safari:** puede mostrar un aviso por el certificado local autofirmado; es normal (privacidad
 estricta). En desarrollo puedes continuar al sitio — ver [docs/07-DESARROLLO.md](docs/07-DESARROLLO.md#tls-local-y-safari).
@@ -90,6 +93,7 @@ Los e2e cubren auth, checkout con cupón, stock insuficiente, cupón inválido, 
 
 ## Documentación
 
+- [docs/GUIA-FRONTEND.md](docs/GUIA-FRONTEND.md) — conectar un cliente frontend a la API
 - [docs/README.md](docs/README.md) — índice
 - [docs/08-SUPABASE.md](docs/08-SUPABASE.md) — conectar Postgres/Storage en Supabase
 - [docs/11-RAILWAY.md](docs/11-RAILWAY.md) — checklist de despliegue (manual)
