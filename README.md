@@ -74,13 +74,17 @@ Errores: `{ code, message, details, timestamp, path, correlationId }`. Checkout 
 
 ## Seed de desarrollo
 
-| Email | Password | Rol |
-|---|---|---|
-| `comprador@demo.com` | `demo12345` | COMPRADOR |
-| `vendedor@demo.com` | `demo12345` | VENDEDOR |
-| `admin@demo.com` | `demo12345` | SUPERADMIN |
+Tras `pnpm --filter api exec prisma db seed` quedan ~24 productos con precios en **COP**, fotos Unsplash y estas cuentas:
 
-Cupón demo: `WELCOME10` (10 %).
+| Email | Password | Rol | Uso |
+|---|---|---|---|
+| `comprador@demo.com` | `demo12345` | COMPRADOR | Catálogo, carrito, checkout, pedidos propios, favoritos, reseñas |
+| `vendedor@demo.com` | `demo12345` | VENDEDOR | CRUD productos, stock, imagen, pedidos de sus ventas, cupones, métricas |
+| `admin@demo.com` | `demo12345` | SUPERADMIN | Categorías, usuarios, reportes de plataforma, simulador de pagos |
+
+Login: `POST /api/v1/auth/ingreso` con `{ "email", "password" }`.
+
+Cupón demo: `WELCOME10` (10 %). Moneda de cobro demo: `PAYMENT_CURRENCY=cop`.
 
 ## Tests
 

@@ -40,15 +40,17 @@ const API = import.meta.env.VITE_API_URL; // o process.env.NEXT_PUBLIC_API_URL
 
 ## Cuentas demo (seed)
 
-Disponibles en local tras `prisma db seed` y también en el entorno Railway actual:
+Disponibles en local tras `prisma db seed` (y en Railway si se re-seedó). El catálogo demo trae ~24 productos en **COP** con fotos Unsplash (`imagenUrl` absoluta).
 
-| Email | Password | Rol |
-|-------|----------|-----|
-| `comprador@demo.com` | `demo12345` | COMPRADOR |
-| `vendedor@demo.com` | `demo12345` | VENDEDOR |
-| `admin@demo.com` | `demo12345` | SUPERADMIN |
+| Email | Password | Rol | Qué probar |
+|-------|----------|-----|------------|
+| `comprador@demo.com` | `demo12345` | COMPRADOR | `GET /catalogo/productos`, carrito, `POST /pedidos`, favoritos, reseñas |
+| `vendedor@demo.com` | `demo12345` | VENDEDOR | `POST/PATCH /vendedor/productos`, existencias, imagen, pedidos de venta, cupones, métricas |
+| `admin@demo.com` | `demo12345` | SUPERADMIN | Categorías, `PATCH /admin/usuarios/:id`, reportes plataforma, simulador de pagos |
 
-Cupón demo: `WELCOME10` (10 %).
+Login: `POST /api/v1/auth/ingreso` con `{ "email": "…", "password": "demo12345" }`.
+
+Cupón demo: `WELCOME10` (10 %). Configura el cliente asumiendo `PAYMENT_CURRENCY=cop` (precios enteros en pesos, p. ej. `59900`).
 
 ## Autenticación
 

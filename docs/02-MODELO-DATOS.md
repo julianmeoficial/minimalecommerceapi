@@ -122,4 +122,4 @@ flowchart TB
 
 ## Seed
 
-`pnpm --filter api exec prisma db seed` crea usuarios demo, categoría, producto, cupón `WELCOME10` y feature flags activos. Detalle en [07-DESARROLLO.md](07-DESARROLLO.md).
+`pnpm --filter api exec prisma db seed` crea usuarios demo, 6 categorías, ~24 productos (precios COP, fotos Unsplash), cupón `WELCOME10` y feature flags activos. Detalle en [07-DESARROLLO.md](07-DESARROLLO.md).

@@ -21,7 +21,7 @@ No hay cliente que “confirme” el pago. El cierre llega por webhook del prove
 3. Cierre Stripe: `POST /api/v1/pagos/webhook` con cabecera `stripe-signature`.
 4. `GET /api/v1/pagos/pedidos/:id` para el estado.
 
-Moneda por defecto: `PAYMENT_CURRENCY=usd`. Wompi en Colombia usará `cop`.
+Moneda por defecto (demo Colombia): `PAYMENT_CURRENCY=cop`. Los precios del seed están en pesos colombianos. Stripe suele usar `usd`; Wompi en Colombia usará `cop`.
 
 ## Integrar Wompi (cuando toque)
 

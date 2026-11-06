@@ -44,8 +44,15 @@ pnpm --filter api exec prisma migrate deploy
 pnpm --filter api exec prisma db seed
 ```
 
-Usuarios demo: `comprador@demo.com`, `vendedor@demo.com`, `admin@demo.com` / `demo12345`.
-Cupón: `WELCOME10`.
+Cuentas demo (password `demo12345`):
+
+| Email | Rol | Uso |
+|---|---|---|
+| `comprador@demo.com` | COMPRADOR | Catálogo, carrito, checkout, pedidos propios, favoritos, reseñas |
+| `vendedor@demo.com` | VENDEDOR | CRUD productos, stock, imagen, pedidos de venta, cupones, métricas |
+| `admin@demo.com` | SUPERADMIN | Categorías, usuarios, reportes, simulador de pagos |
+
+Login: `POST /api/v1/auth/ingreso`. Cupón: `WELCOME10`. Catálogo seed: precios en **COP**, fotos Unsplash. `PAYMENT_CURRENCY=cop`.
 
 ## OpenAPI (Swagger)
 

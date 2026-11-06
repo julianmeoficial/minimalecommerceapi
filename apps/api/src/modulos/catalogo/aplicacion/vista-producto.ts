@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AlmacenMedios } from '../../../compartido/media/almacen-medios';
+import { esUrlExterna } from '../../../compartido/media/es-url-externa';
 import { ProductoCompleto } from '../datos/repositorio-productos';
 import { ProductoVista } from '../dominio/catalogo';
 
@@ -9,6 +10,10 @@ export class ConstructorVistaProducto {
   constructor(private readonly medios: AlmacenMedios) {}
 
   async construir(p: ProductoCompleto): Promise<ProductoVista> {
+    let imagenUrl: string | null = null;
+    if (p.imageKey) {
+      imagenUrl = esUrlExterna(p.imageKey) ? p.imageKey : await this.medios.urlLectura(p.imageKey);
+    }
     return {
       id: p.id,
       nombre: p.name,
@@ -16,7 +21,7 @@ export class ConstructorVistaProducto {
       precio: Number(p.price),
       existencias: p.stock,
       disponible: p.stock > 0,
-      imagenUrl: p.imageKey ? await this.medios.urlLectura(p.imageKey) : null,
+      imagenUrl,
       categoria: { id: p.category.id, nombre: p.category.name },
       vendedor: { id: p.seller.id, nombre: p.seller.name },
       preventa: p.preorder,

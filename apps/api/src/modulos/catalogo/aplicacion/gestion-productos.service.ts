@@ -5,6 +5,7 @@ import { NoEncontrado } from '../../../compartido/errores/error-api';
 import { EVENTOS } from '../../../compartido/eventos/eventos-pedido';
 import type { ExistenciasCambiadas } from '../../../compartido/eventos/eventos-pedido';
 import { AlmacenMedios } from '../../../compartido/media/almacen-medios';
+import { esUrlExterna } from '../../../compartido/media/es-url-externa';
 import { validarImagen } from '../../../compartido/media/validar-imagen';
 import { RepositorioCategorias } from '../datos/repositorio-categorias';
 import { DatosProducto, RepositorioProductos } from '../datos/repositorio-productos';
@@ -56,7 +57,9 @@ export class GestionProductosService {
     const { mime, extension } = validarImagen(buffer);
     const clave = await this.medios.guardar(buffer!, extension, mime);
     const p = await this.productos.actualizar(id, { imageKey: clave });
-    if (actual.imageKey) await this.medios.eliminar(actual.imageKey).catch(() => undefined);
+    if (actual.imageKey && !esUrlExterna(actual.imageKey)) {
+      await this.medios.eliminar(actual.imageKey).catch(() => undefined);
+    }
     await this.cache.invalidarProducto(id);
     return this.vista.construir(p);
   }
